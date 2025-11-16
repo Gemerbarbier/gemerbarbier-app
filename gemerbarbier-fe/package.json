@@ -1,0 +1,41 @@
+{
+  "name": "gemerbarbier-fe",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "prod": "next build && next start",
+    "build": "next build && next export && cp -r out/* ../gemerbarbier-be/src/main/resources/static/",
+    "start": "serve out",
+    "lint": "next lint --max-warnings=0"
+  },
+  "dependencies": {
+    "@emotion/cache": "^11.14.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
+    "@fontsource/inter": "^5.2.6",
+    "@mui/icons-material": "7.1.2",
+    "@mui/material": "7.1.2",
+    "@mui/material-nextjs": "7.1.1",
+    "@mui/x-date-pickers": "^8.6.0",
+    "dayjs": "^1.11.13",
+    "next": "^15.3.4",
+    "next-auth": "^4.24.11",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.14.8",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "eslint": "^8.57.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-config-next": "^14.2.4",
+    "eslint-plugin-css-modules": "^2.12.0",
+    "next-auth": "^4.24.11",
+    "sass": "^1.77.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.2"
+  }
+}
