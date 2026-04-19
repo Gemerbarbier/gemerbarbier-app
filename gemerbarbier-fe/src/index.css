@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Industrial barbershop palette - dark, sophisticated, metallic */
+    --background: 0 0% 8%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Deep black primary with metallic bronze accent */
+    --primary: 0 0% 5%;
+    --primary-foreground: 0 0% 98%;
+
+    /* Metallic bronze for premium feel */
+    --metallic: 35 65% 55%;
+    --metallic-foreground: 0 0% 10%;
+
+    /* Dark grey secondary */
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 98%;
+
+    /* Muted grey tones */
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
+
+    /* Bronze accent */
+    --accent: 35 65% 55%;
+    --accent-foreground: 0 0% 10%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 18%;
+    --ring: 35 65% 55%;
+
+    --radius: 0.25rem;
+
+    /* Shadows for industrial depth */
+    --shadow-deep: 0 20px 50px -12px rgba(0, 0, 0, 0.8);
+    --shadow-metallic: 0 4px 20px rgba(181, 136, 75, 0.15);
+    
+    /* Gradients */
+    --gradient-dark: linear-gradient(135deg, hsl(0, 0%, 8%) 0%, hsl(0, 0%, 5%) 100%);
+    --gradient-metallic: linear-gradient(135deg, hsl(35, 65%, 55%) 0%, hsl(35, 55%, 45%) 100%);
+    --gradient-shine: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 50%, transparent 100%);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Smooth scroll behavior */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--accent));
+    border-radius: 5px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--metallic));
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}

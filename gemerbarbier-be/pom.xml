@@ -1,158 +1,215 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns="http://maven.apache.org/POM/4.0.0"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
            http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-
-  <groupId>sk.gemerbarbier</groupId>
   <artifactId>gemerbarbier-be</artifactId>
-  <version>0.0.1</version>
-  <packaging>jar</packaging>
-
-  <!-- Use Spring Boot parent for dependency management -->
-  <parent>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.4.5</version> <!-- example version -->
-    <relativePath/> <!-- lookup parent from repository -->
-  </parent>
-
-  <properties>
-    <java.version>24</java.version>
-    <mapstruct.version>1.5.5.Final</mapstruct.version>
-    <openapi.generator.version>7.5.0</openapi.generator.version>
-
-    <lombok.version>1.18.30</lombok.version> <!-- or lower/higher based on compatibility -->
-    <lombok.mapstruct.binding.version>0.2.0</lombok.mapstruct.binding.version>
-
-    <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
-  </properties>
-
-  <dependencies>
-    <!-- Spring Boot Starters -->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-security</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-data-jpa</artifactId>
-    </dependency>
-
-    <!-- Database -->
-    <dependency>
-      <groupId>org.postgresql</groupId>
-      <artifactId>postgresql</artifactId>
-    </dependency>
-
-    <!-- Lombok -->
-    <dependency>
-      <groupId>org.projectlombok</groupId>
-      <artifactId>lombok</artifactId>
-      <version>${lombok.version}</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <!-- MapStruct -->
-    <dependency>
-      <groupId>org.mapstruct</groupId>
-      <artifactId>mapstruct</artifactId>
-      <version>${mapstruct.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.mapstruct</groupId>
-      <artifactId>mapstruct-processor</artifactId>
-      <version>${mapstruct.version}</version>
-      <scope>provided</scope>
-    </dependency>
-
-    <!-- Flyway -->
-    <dependency>
-      <groupId>org.flywaydb</groupId>
-      <artifactId>flyway-core</artifactId>
-    </dependency>
-  </dependencies>
 
   <build>
     <plugins>
       <!-- Compiler plugin -->
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>${maven.compiler.plugin.version}</version>
         <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
           <annotationProcessorPaths>
             <path>
-              <groupId>org.mapstruct</groupId>
               <artifactId>mapstruct-processor</artifactId>
+              <groupId>org.mapstruct</groupId>
               <version>${mapstruct.version}</version>
             </path>
             <path>
-              <groupId>org.projectlombok</groupId>
               <artifactId>lombok</artifactId>
+              <groupId>org.projectlombok</groupId>
               <version>${lombok.version}</version>
             </path>
             <path>
-              <groupId>org.projectlombok</groupId>
               <artifactId>lombok-mapstruct-binding</artifactId>
+              <groupId>org.projectlombok</groupId>
               <version>${lombok.mapstruct.binding.version}</version>
             </path>
           </annotationProcessorPaths>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
         </configuration>
+        <groupId>org.apache.maven.plugins</groupId>
+        <version>${maven.compiler.plugin.version}</version>
       </plugin>
 
-      <!-- OpenAPI Generator plugin -->
-      <!--<plugin>
-        <groupId>org.openapitools</groupId>
+      <plugin>
         <artifactId>openapi-generator-maven-plugin</artifactId>
-        <version>${openapi.generator.version}</version>
         <executions>
           <execution>
-            <id>generate-api</id>
+            <configuration>
+              <apiPackage>sk.gemerbarbier.api</apiPackage>
+              <configOptions>
+                <interfaceOnly>true</interfaceOnly>
+                <useJakartaEe>true</useJakartaEe>
+                <useTags>true</useTags>
+              </configOptions>
+              <typeMappings>
+                <typeMapping>OffsetDateTime=java.time.LocalDateTime</typeMapping>
+              </typeMappings>
+              <generatorName>spring</generatorName>
+              <inputSpec>${project.basedir}/src/main/resources/gemerbarbier-api.yaml</inputSpec>
+              <library>spring-boot</library>
+              <modelNameSuffix>Dto</modelNameSuffix>
+              <modelPackage>sk.gemerbarbier.model</modelPackage>
+              <output>${project.build.directory}/generated-sources/openapi</output>
+            </configuration>
             <goals>
               <goal>generate</goal>
             </goals>
-            <configuration>
-              <inputSpec>${project.basedir}/src/main/resources/gemerbarbier-api.yaml</inputSpec>
-              <generatorName>spring</generatorName>
-              <output>${project.build.directory}/generated-sources/openapi</output>
-              <apiPackage>com.example.api</apiPackage>
-              <modelPackage>com.example.model</modelPackage>
-              <configOptions>
-                <interfaceOnly>true</interfaceOnly>
-                <useTags>true</useTags>
-              </configOptions>
-            </configuration>
+            <id>generate-api</id>
           </execution>
         </executions>
-      </plugin>-->
+        <groupId>org.openapitools</groupId>
+        <version>${openapi.generator.version}</version>
+      </plugin>
 
       <!-- Checkstyle plugin -->
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>3.3.0</version>
-        <executions>
-          <execution>
-            <id>verify-style</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
         <configuration>
           <configLocation>google_checks.xml</configLocation>
           <consoleOutput>true</consoleOutput>
           <failsOnError>true</failsOnError>
         </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <id>verify-style</id>
+            <phase>verify</phase>
+          </execution>
+        </executions>
+        <groupId>org.apache.maven.plugins</groupId>
+        <version>3.3.0</version>
       </plugin>
     </plugins>
   </build>
+  <dependencies>
+    <!-- Spring Boot Starters -->
+    <dependency>
+      <artifactId>spring-boot-starter-web</artifactId>
+      <groupId>org.springframework.boot</groupId>
+    </dependency>
+    <dependency>
+      <artifactId>spring-boot-starter-security</artifactId>
+      <groupId>org.springframework.boot</groupId>
+    </dependency>
+    <dependency>
+      <artifactId>spring-boot-starter-data-jpa</artifactId>
+      <groupId>org.springframework.boot</groupId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+
+    <!-- JWT -->
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-api</artifactId>
+      <version>${jwt.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-impl</artifactId>
+      <version>${jwt.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-jackson</artifactId>
+      <version>${jwt.version}</version>
+    </dependency>
+
+    <!-- Database -->
+    <dependency>
+      <artifactId>postgresql</artifactId>
+      <groupId>org.postgresql</groupId>
+    </dependency>
+
+    <!-- Lombok -->
+    <dependency>
+      <artifactId>lombok</artifactId>
+      <groupId>org.projectlombok</groupId>
+      <scope>provided</scope>
+      <version>${lombok.version}</version>
+    </dependency>
+
+    <!-- MapStruct -->
+    <dependency>
+      <artifactId>mapstruct</artifactId>
+      <groupId>org.mapstruct</groupId>
+      <version>${mapstruct.version}</version>
+    </dependency>
+    <dependency>
+      <artifactId>mapstruct-processor</artifactId>
+      <groupId>org.mapstruct</groupId>
+      <scope>provided</scope>
+      <version>${mapstruct.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.swagger.core.v3</groupId>
+      <artifactId>swagger-annotations</artifactId>
+      <version>${swagger.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>jakarta.validation</groupId>
+      <artifactId>jakarta.validation-api</artifactId>
+      <version>${jakarta.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+      <version>${jackson.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.openapitools</groupId>
+      <artifactId>jackson-databind-nullable</artifactId>
+      <version>${jackson-databind.version}</version>
+    </dependency>
+
+    <!-- Flyway -->
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-database-postgresql</artifactId>
+    </dependency>
+  </dependencies>
+  <groupId>sk.gemerbarbier</groupId>
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- Use Spring Boot parent for dependency management -->
+  <packaging>jar</packaging>
+
+  <parent>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <groupId>org.springframework.boot</groupId>
+    <relativePath/> <!-- example version -->
+    <version>3.4.5</version> <!-- lookup parent from repository -->
+  </parent>
+
+  <properties>
+    <java.version>24</java.version>
+    <lombok.mapstruct.binding.version>0.2.0</lombok.mapstruct.binding.version>
+    <lombok.version>1.18.42</lombok.version>
+    <swagger.version>2.2.41</swagger.version>
+    <jakarta.version>3.1.1</jakarta.version>
+    <jackson.version>2.20</jackson.version>
+    <jackson-databind.version>0.2.8</jackson-databind.version>
+    <jwt.version>0.11.5</jwt.version>
+    <flyway.version>11.20.2</flyway.version>
+
+    <mapstruct.version>1.5.5.Final
+    </mapstruct.version> <!-- or lower/higher based on compatibility -->
+    <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
+
+    <openapi.generator.version>7.5.0</openapi.generator.version>
+  </properties>
+
+  <version>0.0.1</version>
 </project>

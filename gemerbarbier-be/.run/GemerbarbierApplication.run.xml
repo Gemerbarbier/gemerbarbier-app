@@ -1,0 +1,26 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="GemerbarbierApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <option name="ALTERNATIVE_JRE_PATH" value="17" />
+    <envs>
+      <env name="DATASOURCE_PASSWORD" value="gemerbarbier" />
+      <env name="DATASOURCE_URL" value="jdbc:postgresql://localhost:5438/gemerbarbier-db" />
+      <env name="DATASOURCE_USERNAME" value="gemerbarbier" />
+      <env name="JWT_SECRET" value="7sYtP9k2QfLx8Vb3HmN4rTzC6eW1uA5JdX0gKpR2cM9sBvYq4LhF8nE3ZtU6wD1" />
+    </envs>
+    <module name="gemerbarbier-be" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="sk.gemerbarbier.GemerbarbierApplication" />
+    <extension name="net.ashald.envfile">
+      <option name="IS_ENABLED" value="false" />
+      <option name="IS_SUBST" value="false" />
+      <option name="IS_PATH_MACRO_SUPPORTED" value="false" />
+      <option name="IS_IGNORE_MISSING_FILES" value="false" />
+      <option name="IS_ENABLE_EXPERIMENTAL_INTEGRATIONS" value="false" />
+      <ENTRIES>
+        <ENTRY IS_ENABLED="true" PARSER="runconfig" IS_EXECUTABLE="false" />
+      </ENTRIES>
+    </extension>
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

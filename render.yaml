@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: gemerbarbier-app
+    env: docker
+    dockerfilePath: gemerbarbier-be/Dockerfile
+    plan: starter
+    autoDeploy: true
+    healthCheckPath: /
+    envVars:
+      - key: SERVER_PORT
+        value: 8080

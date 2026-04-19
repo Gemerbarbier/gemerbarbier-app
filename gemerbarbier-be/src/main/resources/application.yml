@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5438/gemerbarbier-db
+    username: gemerbarbier
+    password: gemerbarbier
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+jwt:
+  secret: ${JWT_SECRET}
