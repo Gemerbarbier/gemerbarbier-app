@@ -1,0 +1,45 @@
+# --- IDE ---
+.idea/
+*.iml
+*.ipr
+*.iws
+*.log
+
+# IntelliJ run configs are usually local
+*.run.xml
+.gemerbarbier-idea/
+
+# --- Java / Spring Boot ---
+**/target/
+**/build/
+**/out/
+**/*.class
+**/*.jar
+**/*.war
+**/*.ear
+
+# Maven wrapper
+.mvn/wrapper/maven-wrapper.jar
+
+# --- Frontend / Node ---
+**/node_modules/
+**/dist/
+**/.vite/
+**/coverage/
+
+# --- Environment / secrets ---
+.env
+.env.*
+!.env.example
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Docker ---
+**/.docker/
+
+# --- Generated API / OpenAPI ---
+**/generated/
+**/openapi/
+**/swagger/
