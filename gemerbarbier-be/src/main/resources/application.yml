@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5438/gemerbarbier-db
-    username: gemerbarbier
-    password: gemerbarbier
+    url: ${DB_URL}:jdbc:postgresql://localhost:5438/gemerbarbier-db
+    username: ${DB_USERNAME}:gemerbarbier
+    password: ${DB_PASSWORD}:gemerbarbier
   jpa:
     hibernate:
       ddl-auto: validate
