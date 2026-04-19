@@ -1,6 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="GemerbarbierApp" type="CompoundRunConfigurationType">
-    <toRun name="GemerbarbierDatabase" type="docker-deploy" />
-    <method v="2" />
-  </configuration>
-</component>
