@@ -8,8 +8,8 @@ public class SpaController {
 
   @GetMapping(value = {
       "/",
-      "/admin",
-      "/admin/**"
+      "/admin-dashboard",
+      "/admin-dashboard/**"
   })
   public String forward() {
     return "forward:/index.html";
