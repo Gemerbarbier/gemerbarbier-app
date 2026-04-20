@@ -170,7 +170,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     const isLoggedIn = sessionStorage.getItem("adminDemo");
     if (!isLoggedIn) {
-      navigate("/admin/login");
+      navigate("/admin-dashboard/login");
       return;
     }
 
@@ -283,7 +283,7 @@ const AdminDashboard = () => {
       title: "Odhlásenie úspešné",
       description: "Boli ste odhlásení z admin panela.",
     });
-    navigate("/admin/login");
+    navigate("/admin-dashboard/login");
   };
 
   const handleCancelReservation = async (id: number) => {
@@ -407,8 +407,6 @@ const AdminDashboard = () => {
 
   const weekDates = getWeekDates();
   const dayNames = ["Po", "Ut", "St", "Št", "Pi", "So", "Ne"];
-
-  const getBarberName = () => currentBarberName || "Neznámy";
 
   const getBarberInitials = () => currentBarberName.split(' ').map(n => n[0]).join('');
 

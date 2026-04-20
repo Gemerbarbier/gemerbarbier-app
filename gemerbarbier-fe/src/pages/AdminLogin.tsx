@@ -19,7 +19,7 @@ const AdminLogin = () => {
   useEffect(() => {
     const isLoggedIn = sessionStorage.getItem("adminDemo");
     if (isLoggedIn) {
-      navigate("/admin", { replace: true });
+      navigate("/admin-dashboard", { replace: true });
     }
   }, [navigate]);
 
@@ -47,7 +47,7 @@ const AdminLogin = () => {
         title: "Prihlásenie úspešné",
         description: `Vitajte, ${user?.name || user?.username || ""}!`,
       });
-      navigate("/admin");
+      navigate("/admin-dashboard");
     } else {
       toast({
         title: "Neplatné prihlasovacie údaje",

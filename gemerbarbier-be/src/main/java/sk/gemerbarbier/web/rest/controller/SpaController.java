@@ -1,17 +1,13 @@
 package sk.gemerbarbier.web.rest.controller;
 
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 public class SpaController {
 
-  @GetMapping(value = {
-      "/",
-      "/admin",
-      "/admin/**"
-  })
-  public String forward() {
+  @RequestMapping(value = "/{path:[^\\.]*}")
+  public String redirect() {
     return "forward:/index.html";
   }
 }
