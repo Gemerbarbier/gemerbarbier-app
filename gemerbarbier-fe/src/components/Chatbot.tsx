@@ -147,7 +147,7 @@ const Chatbot = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className="fixed bottom-24 right-6 w-96 h-[500px] bg-card border-border shadow-metallic z-50 flex flex-col animate-fade-in">
+        <Card className="fixed bottom-24 right-4 left-4 sm:left-auto sm:right-6 sm:w-96 h-[70vh] sm:h-[500px] max-h-[calc(100vh-7rem)] bg-card border-border shadow-metallic z-50 flex flex-col animate-fade-in">
           {/* Header */}
           <div className="p-4 border-b border-border bg-gradient-metallic">
             <h3 className="text-lg font-bold text-white">Gemerbarbier Asistent</h3>

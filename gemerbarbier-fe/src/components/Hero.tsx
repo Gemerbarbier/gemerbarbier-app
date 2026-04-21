@@ -38,7 +38,7 @@ const Hero = () => {
           </div>
 
           {/* Main Heading */}
-          <h1 className="text-5xl md:text-7xl font-bold leading-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold leading-tight">
             <span className="block text-foreground mb-2">PRÉMIOVÁ</span>
             <span className="block bg-gradient-metallic bg-clip-text text-transparent">
               STAROSTLIVOSŤ

@@ -48,7 +48,7 @@ const Navigation = () => {
           {/* Logo */}
           <button
             onClick={() => scrollToSection("home")}
-            className="text-2xl font-bold bg-gradient-metallic bg-clip-text text-transparent hover:opacity-80 transition-opacity"
+            className="text-lg sm:text-2xl font-bold bg-gradient-metallic bg-clip-text text-transparent hover:opacity-80 transition-opacity whitespace-nowrap"
           >
             GEMERBARBIER
           </button>

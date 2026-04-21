@@ -225,7 +225,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             description: 'Boli ste automaticky odhlásený. Prihláste sa znova.',
             variant: 'destructive',
           });
-          window.location.href = '/admin-dashboard/login';
+          window.location.href = '/admin/login';
         }
       }
     };

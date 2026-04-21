@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2.45.0";
 import { renderTemplate, type TemplateName, type ReservationPayload } from "../_shared/email-templates.ts";
 
@@ -11,7 +10,7 @@ const corsHeaders = {
 // Retry strategy: 3 attempts with backoff (1m → 5m → 15m)
 const RETRY_DELAYS_MIN = [1, 5, 15];
 const BATCH_SIZE = 20;
-const FROM_ADDRESS = "Gemer Barbier <rezervacie@gemerbarbier.sk>"; // ⚠️ Replace with your verified Resend domain address
+const FROM_ADDRESS = "Gemer Barbier <rezervacie@gemerbarbier.sk>";
 
 interface EmailQueueRow {
   id: string;
@@ -50,7 +49,6 @@ const handler = async (req: Request): Promise<Response> => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    console.log("Resend API key:", RESEND_API_KEY);
     if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY not configured");
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
@@ -133,4 +131,4 @@ const handler = async (req: Request): Promise<Response> => {
   }
 };
 
-serve(handler);
+Deno.serve(handler);

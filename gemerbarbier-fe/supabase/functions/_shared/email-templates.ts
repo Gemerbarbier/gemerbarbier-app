@@ -171,16 +171,16 @@ function reservationReminder(p: ReservationPayload) {
 export type TemplateName = "reservation_confirmation" | "reservation_reminder";
 
 export const TEMPLATES: Record<
-    TemplateName,
-    (payload: ReservationPayload) => { subject: string; html: string }
+  TemplateName,
+  (payload: ReservationPayload) => { subject: string; html: string }
 > = {
   reservation_confirmation: reservationConfirmation,
   reservation_reminder: reservationReminder,
 };
 
 export function renderTemplate(
-    name: TemplateName,
-    payload: ReservationPayload,
+  name: TemplateName,
+  payload: ReservationPayload,
 ): { subject: string; html: string } {
   const fn = TEMPLATES[name];
   if (!fn) throw new Error(`Unknown template: ${name}`);

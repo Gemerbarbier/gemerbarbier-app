@@ -30,11 +30,11 @@ const Reservation = () => {
   const [isLoadingBarbers, setIsLoadingBarbers] = useState(true);
   const [isLoadingServices, setIsLoadingServices] = useState(false);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
-
+  
   const [barbers, setBarbers] = useState<Barber[]>([]);
   const [services, setServices] = useState<Service[]>([]);
   const [availableSlots, setAvailableSlots] = useState<AvailableTimeSlotResponse[]>([]);
-
+  
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -124,7 +124,7 @@ const Reservation = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    
     if (!formData.name || !formData.email || !formData.phone || !formData.date || !formData.time || !formData.serviceId || !formData.barberId) {
       toast({
         title: "Chýbajúce Informácie",
@@ -149,7 +149,7 @@ const Reservation = () => {
     });
 
     if (response.success) {
-      // Get service and barber details for email
+      // Get service and barber details for email (id may be number or string)
       const selectedService = services.find(s => String(s.id) === String(formData.serviceId));
       const selectedBarber = barbers.find(b => String(b.id) === String(formData.barberId));
 
@@ -340,10 +340,10 @@ const Reservation = () => {
                 className="w-full h-10 px-3 rounded-md border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <option value="" className="text-muted-foreground">
-                  {!formData.barberId
-                    ? "Najprv vyberte holiča"
-                    : isLoadingServices
-                      ? "Načítavam..."
+                  {!formData.barberId 
+                    ? "Najprv vyberte holiča" 
+                    : isLoadingServices 
+                      ? "Načítavam..." 
                       : "Vyberte službu..."}
                 </option>
                 {services.map((service) => (
@@ -406,12 +406,12 @@ const Reservation = () => {
                   className="w-full h-10 px-3 rounded-md border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <option value="" className="text-muted-foreground">
-                    {!formData.date
-                      ? "Najprv vyberte dátum"
-                      : isLoadingSlots
-                        ? "Načítavam..."
-                        : timesForSelectedDate.length === 0
-                          ? "Žiadne voľné termíny"
+                    {!formData.date 
+                      ? "Najprv vyberte dátum" 
+                      : isLoadingSlots 
+                        ? "Načítavam..." 
+                        : timesForSelectedDate.length === 0 
+                          ? "Žiadne voľné termíny" 
                           : "Vyberte čas..."}
                   </option>
                   {timesForSelectedDate.map((time) => (

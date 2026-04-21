@@ -15,7 +15,7 @@ const AdminLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Redirect to /admin if already logged in
+  // Redirect to /admin-dashboard if already logged in
   useEffect(() => {
     const isLoggedIn = sessionStorage.getItem("adminDemo");
     if (isLoggedIn) {

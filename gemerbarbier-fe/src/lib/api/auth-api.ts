@@ -5,12 +5,12 @@
  * Simple admin-only login for dashboard access
  */
 
-import { getAuthHeader, getRefreshToken } from '@/lib/auth/token';
+import { getAuthHeader, getRefreshToken } from "@/lib/auth/token";
 
 // ============= Configuration =============
 
-const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || '/auth';
-const LOGIN_URL = import.meta.env.VITE_AUTH_API_URL + '/login';
+const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || "/auth";
+const LOGIN_URL = import.meta.env.VITE_AUTH_API_URL + "/login";
 
 // ============= Types =============
 
@@ -51,34 +51,34 @@ export interface ApiError {
 async function authFetch<T>(
   endpoint: string,
   options: RequestInit = {},
-  baseUrl: string = AUTH_API_URL
+  baseUrl: string = AUTH_API_URL,
 ): Promise<ApiResponse<T>> {
   try {
     const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      "Content-Type": "application/json",
+      Accept: "application/json",
       ...options.headers,
     };
 
     const authHeader = getAuthHeader();
     if (authHeader) {
-      (headers as Record<string, string>)['Authorization'] = authHeader;
+      (headers as Record<string, string>)["Authorization"] = authHeader;
     }
 
     const response = await fetch(`${baseUrl}${endpoint}`, {
       ...options,
       headers,
-      credentials: 'include',
+      credentials: "include",
     });
 
     if (response.status === 204) {
       return { data: null, error: null, success: true };
     }
 
-    const contentType = response.headers.get('content-type');
+    const contentType = response.headers.get("content-type");
     let data: T | null = null;
 
-    if (contentType?.includes('application/json')) {
+    if (contentType?.includes("application/json")) {
       data = await response.json();
     }
 
@@ -92,7 +92,7 @@ async function authFetch<T>(
       return {
         data: null,
         error: {
-          message: errorData?.message || errorData?.error || 'Chyba pri prihlásení',
+          message: errorData?.message || errorData?.error || "Chyba pri prihlásení",
           status: response.status,
           errors: errorData?.errors,
         },
@@ -105,7 +105,7 @@ async function authFetch<T>(
     return {
       data: null,
       error: {
-        message: err instanceof Error ? err.message : 'Sieťová chyba',
+        message: err instanceof Error ? err.message : "Sieťová chyba",
         status: 0,
       },
       success: false,
@@ -119,13 +119,15 @@ async function authFetch<T>(
  * Login with username and password
  * POST /api/auth/login
  */
-export async function login(
-  credentials: LoginRequest
-): Promise<ApiResponse<AuthResponse>> {
-  return authFetch<AuthResponse>('', {
-    method: 'POST',
-    body: JSON.stringify(credentials),
-  }, LOGIN_URL);
+export async function login(credentials: LoginRequest): Promise<ApiResponse<AuthResponse>> {
+  return authFetch<AuthResponse>(
+    "",
+    {
+      method: "POST",
+      body: JSON.stringify(credentials),
+    },
+    LOGIN_URL,
+  );
 }
 
 /**
@@ -137,13 +139,13 @@ export async function refreshToken(): Promise<ApiResponse<AuthResponse>> {
   if (!token) {
     return {
       data: null,
-      error: { message: 'Žiadny refresh token', status: 401 },
+      error: { message: "Žiadny refresh token", status: 401 },
       success: false,
     };
   }
 
-  return authFetch<AuthResponse>('/refresh', {
-    method: 'POST',
+  return authFetch<AuthResponse>("/refresh", {
+    method: "POST",
     body: JSON.stringify({ refreshToken: token }),
   });
 }
@@ -154,8 +156,8 @@ export async function refreshToken(): Promise<ApiResponse<AuthResponse>> {
  */
 export async function logout(): Promise<ApiResponse<void>> {
   const token = getRefreshToken();
-  return authFetch<void>('/logout', {
-    method: 'POST',
+  return authFetch<void>("/logout", {
+    method: "POST",
     body: JSON.stringify({ refreshToken: token }),
   });
 }
@@ -165,8 +167,8 @@ export async function logout(): Promise<ApiResponse<void>> {
  * GET /api/auth/me
  */
 export async function getCurrentUser(): Promise<ApiResponse<UserInfo>> {
-  return authFetch<UserInfo>('/me', {
-    method: 'GET',
+  return authFetch<UserInfo>("/me", {
+    method: "GET",
   });
 }
 
@@ -174,11 +176,9 @@ export async function getCurrentUser(): Promise<ApiResponse<UserInfo>> {
  * Validate current token
  * GET /api/auth/validate
  */
-export async function validateToken(): Promise<
-  ApiResponse<{ valid: boolean; user?: UserInfo }>
-> {
-  return authFetch<{ valid: boolean; user?: UserInfo }>('/validate', {
-    method: 'GET',
+export async function validateToken(): Promise<ApiResponse<{ valid: boolean; user?: UserInfo }>> {
+  return authFetch<{ valid: boolean; user?: UserInfo }>("/validate", {
+    method: "GET",
   });
 }
 

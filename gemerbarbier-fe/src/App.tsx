@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
+import RequireAdminAuth from "./components/RequireAdminAuth";
 
 const queryClient = new QueryClient();
 
@@ -18,8 +19,15 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/admin-dashboard/login" element={<AdminLogin />} />
-          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route
+            path="/admin-dashboard"
+            element={
+              <RequireAdminAuth>
+                <AdminDashboard />
+              </RequireAdminAuth>
+            }
+          />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

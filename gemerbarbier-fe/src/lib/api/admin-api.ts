@@ -47,8 +47,8 @@ export interface ReservationCreateAdminRequest {
  * GET /admin/barbers/{barberId}/time-slots?date={date}
  */
 export async function getAdminTimeSlots(
-    barberId: string,
-    date: string
+  barberId: string,
+  date: string
 ): Promise<ApiResponse<TimeSlotAdmin[]>> {
   return httpClient<TimeSlotAdmin[]>(`/admin/barbers/${barberId}/time-slots?date=${date}`);
 }
@@ -58,8 +58,8 @@ export async function getAdminTimeSlots(
  * PATCH /admin/time-slots/{slotId}/status
  */
 export async function updateTimeSlotStatus(
-    slotId: number,
-    data: TimeSlotStatusUpdateRequest
+  slotId: number,
+  data: TimeSlotStatusUpdateRequest
 ): Promise<ApiResponse<void>> {
   return httpClient<void>(`/admin/time-slots/${slotId}/status`, {
     method: 'PATCH',
@@ -72,8 +72,8 @@ export async function updateTimeSlotStatus(
  * GET /admin/reservations?barberId={barberId}&date={date}
  */
 export async function getAdminReservations(
-    barberId: string,
-    date: string
+  barberId: string,
+  date: string
 ): Promise<ApiResponse<ReservationAdmin[]>> {
   return httpClient<ReservationAdmin[]>(`/admin/reservations?barberId=${barberId}&date=${date}`);
 }
@@ -83,7 +83,7 @@ export async function getAdminReservations(
  * POST /admin/reservations
  */
 export async function createAdminReservation(
-    data: ReservationCreateAdminRequest
+  data: ReservationCreateAdminRequest
 ): Promise<ApiResponse<void>> {
   return httpClient<void>('/admin/reservations', {
     method: 'POST',
@@ -96,8 +96,8 @@ export async function createAdminReservation(
  * PATCH /admin/barbers/{barberId}/time-slots/deactivate?date={date}
  */
 export async function deactivateAllTimeSlots(
-    barberId: string,
-    date: string
+  barberId: string,
+  date: string
 ): Promise<ApiResponse<void>> {
   return httpClient<void>(`/admin/barbers/${barberId}/time-slots/deactivate?date=${date}`, {
     method: 'PATCH',
@@ -109,7 +109,7 @@ export async function deactivateAllTimeSlots(
  * PATCH /admin/reservations/{reservationId}/cancel
  */
 export async function cancelAdminReservation(
-    reservationId: number
+  reservationId: number
 ): Promise<ApiResponse<void>> {
   return httpClient<void>(`/admin/reservations/${reservationId}/cancel`, {
     method: 'PATCH',
