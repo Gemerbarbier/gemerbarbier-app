@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
+import sk.gemerbarbier.domain.ServiceStatistic;
 import sk.gemerbarbier.entity.Reservation;
 import sk.gemerbarbier.repository.ReservationRepository;
 import sk.gemerbarbier.storage.api.ReservationStorageApi;
@@ -44,5 +45,12 @@ public class ReservationStorage implements ReservationStorageApi {
 
     return repository.findById(reservationId).orElseThrow(
         () -> new EntityNotFoundException("Reservation with id " + reservationId + " not found"));
+  }
+
+  @Override
+  public List<ServiceStatistic> getStatistics(LocalDateTime from, LocalDateTime to) {
+    logger.debug("Getting service statistics from {} to {}.", from, to);
+
+    return repository.getStatistics(from, to);
   }
 }

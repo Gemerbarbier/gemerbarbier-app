@@ -2,6 +2,7 @@ package sk.gemerbarbier.storage.api;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import sk.gemerbarbier.domain.ServiceStatistic;
 import sk.gemerbarbier.entity.Reservation;
 
 public interface ReservationStorageApi {
@@ -11,4 +12,6 @@ public interface ReservationStorageApi {
   List<Reservation> getReservations(Long barberId, LocalDateTime from, LocalDateTime to);
 
   Reservation getById(Long reservationId);
+
+  List<ServiceStatistic> getStatistics(LocalDateTime from, LocalDateTime to);
 }

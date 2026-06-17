@@ -1,37 +1,30 @@
-import { useState, useEffect, useCallback } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import {useCallback, useEffect, useState} from "react";
+import {useNavigate, useSearchParams} from "react-router-dom";
+import {Button} from "@/components/ui/button";
+import {Input} from "@/components/ui/input";
+import {Label} from "@/components/ui/label";
+import {useToast} from "@/hooks/use-toast";
+import {Calendar as CalendarComponent} from "@/components/ui/calendar";
+import {Popover, PopoverContent, PopoverTrigger,} from "@/components/ui/popover";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
+  BarChart3,
   Calendar,
-  Clock,
-  LogOut,
-  Plus,
-  Trash2,
-  Edit,
-  User,
-  Scissors,
-  Phone,
-  Mail,
-  X,
+  CalendarIcon,
   Check,
   ChevronLeft,
   ChevronRight,
-  CalendarIcon,
-  Sparkles,
+  Clock,
   Flame,
-  BarChart3,
   Loader2,
+  LogOut,
+  Mail,
+  Phone,
+  Plus,
+  Scissors,
+  Sparkles,
+  X,
 } from "lucide-react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {Avatar, AvatarFallback} from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -46,22 +39,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
+import {cn} from "@/lib/utils";
 import {
-  getAdminTimeSlots,
-  getAdminReservations,
-  createAdminReservation,
   cancelAdminReservation,
-  updateTimeSlotStatus,
+  createAdminReservation,
   deactivateAllTimeSlots,
-  type TimeSlotAdmin,
+  getAdminReservations,
+  getAdminTimeSlots,
+  getServiceStatistics,
   type ReservationAdmin,
+  type ServiceStatisticsResponse,
+  type TimeSlotAdmin,
+  updateTimeSlotStatus,
 } from "@/lib/api/admin-api";
 import {
-  getServices,
-  getAvailableSlots,
-  type Service,
   type AvailableTimeSlotResponse,
+  getAvailableSlots,
+  getServices,
+  type Service,
 } from "@/lib/api";
 
 // Helper: extract HH:mm from a time string (handles both "09:00" and "2026-04-07T09:00:00")
@@ -114,6 +109,9 @@ const AdminDashboard = () => {
     (searchParams.get("tab") as "reservations" | "slots" | "stats") || "reservations"
   );
   const [statsPeriod, setStatsPeriod] = useState<"week" | "month" | "year">("week");
+  const [statistics, setStatistics] = useState<ServiceStatisticsResponse[]>([]);
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
+  const [statsError, setStatsError] = useState<string | null>(null);
   const [isAddReservationOpen, setIsAddReservationOpen] = useState(false);
   const [newReservation, setNewReservation] = useState({
     date: "",
@@ -156,7 +154,35 @@ const AdminDashboard = () => {
     setSearchParams(params, { replace: true });
   }, [selectedDate, activeTab, setSearchParams]);
 
+  // Fetch service statistics
+  const fetchStatistics = useCallback(async () => {
+    setIsLoadingStats(true);
+    setStatsError(null);
+    try {
+      const period = statsPeriod.toUpperCase() as "WEEK" | "MONTH" | "YEAR";
+      const response = await getServiceStatistics(period);
+      if (response.success && response.data) {
+        setStatistics(response.data);
+      } else {
+        setStatistics([]);
+        setStatsError(response.error?.message || "Nepodarilo sa načítať štatistiky");
+      }
+    } catch {
+      setStatistics([]);
+      setStatsError("Nepodarilo sa načítať štatistiky");
+    } finally {
+      setIsLoadingStats(false);
+    }
+  }, [statsPeriod]);
+
+  useEffect(() => {
+    if (activeTab === "stats") {
+      fetchStatistics();
+    }
+  }, [activeTab, fetchStatistics]);
+
   // Fetch reservations from backend
+
   const fetchReservations = useCallback(async () => {
     if (!currentBarberId) return;
     setIsLoadingReservations(true);
@@ -248,7 +274,7 @@ const AdminDashboard = () => {
       title: "Odhlásenie úspešné",
       description: "Boli ste odhlásení z admin panela.",
     });
-    navigate("/admin/login");
+    navigate("/admin-dashboard/login");
   };
 
   const handleCancelReservation = async (id: number) => {
@@ -280,7 +306,7 @@ const AdminDashboard = () => {
 
     // Convert dd/mm/yyyy to ISO date
     const dateParts = newReservation.date.split('/');
-    const isoDate = dateParts.length === 3 
+    const isoDate = dateParts.length === 3
       ? `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`
       : newReservation.date;
 
@@ -325,8 +351,8 @@ const AdminDashboard = () => {
     if (response.success) {
       toast({
         title: newStatus === 'INACTIVE' ? "Slot odstránený" : "Slot obnovený",
-        description: newStatus === 'INACTIVE' 
-          ? "Časový slot bol vyhodený z ponuky." 
+        description: newStatus === 'INACTIVE'
+          ? "Časový slot bol vyhodený z ponuky."
           : "Časový slot bol vrátený do ponuky.",
       });
       fetchTimeSlots();
@@ -364,8 +390,6 @@ const AdminDashboard = () => {
 
   const weekDates = getWeekDates();
   const dayNames = ["Po", "Ut", "St", "Št", "Pi", "So", "Ne"];
-
-  const getBarberName = () => currentBarberName || "Neznámy";
 
   const getBarberInitials = () => currentBarberName.split(' ').map(n => n[0]).join('');
 
@@ -935,12 +959,63 @@ const AdminDashboard = () => {
             </div>
 
             <div className="bg-card border border-border rounded-lg p-4 sm:p-6">
-              <div className="text-center">
-                <p className="text-xs sm:text-sm text-muted-foreground mb-1">
-                  Štatistiky budú dostupné po napojení na backend endpoint.
+              {isLoadingStats ? (
+                <div className="flex items-center justify-center py-10">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : statsError ? (
+                <p className="text-center text-sm text-destructive">{statsError}</p>
+              ) : statistics.length === 0 ? (
+                <p className="text-center text-xs sm:text-sm text-muted-foreground">
+                  Pre zvolené obdobie nie sú žiadne údaje.
                 </p>
-              </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                    <div className="bg-muted/30 rounded-md p-3">
+                      <p className="text-xs text-muted-foreground">Rezervácie</p>
+                      <p className="text-lg sm:text-2xl font-semibold">
+                        {statistics.reduce((s, x) => s + x.count, 0)}
+                      </p>
+                    </div>
+                    <div className="bg-muted/30 rounded-md p-3">
+                      <p className="text-xs text-muted-foreground">Tržby</p>
+                      <p className="text-lg sm:text-2xl font-semibold">
+                        {statistics.reduce((s, x) => s + x.revenue, 0)} €
+                      </p>
+                    </div>
+                    <div className="bg-muted/30 rounded-md p-3">
+                      <p className="text-xs text-muted-foreground">Služby</p>
+                      <p className="text-lg sm:text-2xl font-semibold">{statistics.length}</p>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs sm:text-sm">
+                      <thead>
+                        <tr className="border-b border-border text-left text-muted-foreground">
+                          <th className="py-2 pr-2 font-medium">Služba</th>
+                          <th className="py-2 px-2 font-medium text-right">Počet</th>
+                          <th className="py-2 pl-2 font-medium text-right">Tržby</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[...statistics]
+                          .sort((a, b) => b.revenue - a.revenue)
+                          .map((s) => (
+                            <tr key={s.serviceName} className="border-b border-border/50 last:border-0">
+                              <td className="py-2 pr-2">{s.serviceName}</td>
+                              <td className="py-2 px-2 text-right">{s.count}</td>
+                              <td className="py-2 pl-2 text-right font-medium">{s.revenue} €</td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
+
           </div>
         )}
       </main>

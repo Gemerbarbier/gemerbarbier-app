@@ -148,6 +148,22 @@ paths:
       responses:
         201:
           description: Created
+  /admin/statistics:
+    get:
+      tags: [ StatisticsAdmin ]
+      summary: Get service statistics for a period
+      operationId: getServiceStatistics
+      parameters:
+        - $ref: '#/components/parameters/period'
+      responses:
+        200:
+          description: Service statistics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServiceStatisticsResponse'
   /admin/reservations/{reservationId}/cancel:
     patch:
       tags: [ ReservationAdmin ]
@@ -206,7 +222,25 @@ components:
       schema:
         type: string
         format: date
+    period:
+      name: period
+      in: query
+      required: true
+      schema:
+        type: string
+        enum: [ WEEK, MONTH, YEAR ]
   schemas:
+    ServiceStatisticsResponse:
+      type: object
+      properties:
+        serviceName:
+          type: string
+        count:
+          type: integer
+          format: int64
+        revenue:
+          type: integer
+          format: int64
     ReservationAdminResponse:
       type: object
       properties:

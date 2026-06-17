@@ -40,6 +40,16 @@ export interface ReservationCreateAdminRequest {
   note?: string;
 }
 
+export type StatisticsPeriod = 'WEEK' | 'MONTH' | 'YEAR';
+
+export interface ServiceStatisticsResponse {
+  serviceName: string;
+  count: number;
+  revenue: number;
+}
+
+
+
 // ============= API Methods =============
 
 /**
@@ -116,6 +126,16 @@ export async function cancelAdminReservation(
   });
 }
 
+/**
+ * Get service statistics for a period
+ * GET /admin/statistics?period={WEEK|MONTH|YEAR}
+ */
+export async function getServiceStatistics(
+  period: StatisticsPeriod
+): Promise<ApiResponse<ServiceStatisticsResponse[]>> {
+  return httpClient<ServiceStatisticsResponse[]>(`/admin/statistics?period=${period}`);
+}
+
 // ============= API Object Export =============
 
 export const adminApi = {
@@ -125,4 +145,6 @@ export const adminApi = {
   createReservation: createAdminReservation,
   cancelReservation: cancelAdminReservation,
   deactivateAllTimeSlots,
+  getServiceStatistics,
 };
+
