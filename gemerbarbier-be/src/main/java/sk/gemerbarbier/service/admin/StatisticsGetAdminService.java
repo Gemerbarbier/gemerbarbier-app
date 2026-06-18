@@ -21,13 +21,25 @@ public class StatisticsGetAdminService implements StatisticsGetAdminApi {
   @Override
   public List<ServiceStatistic> getStatistics(StatisticsPeriod period, LocalDate date) {
     LocalDate referenceDate = date != null ? date : LocalDate.now();
-    LocalDateTime to = referenceDate.plusDays(1).atStartOfDay();
+    LocalDate today = LocalDate.now();
+
     LocalDateTime from = switch (period) {
       case WEEK ->
           referenceDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).atStartOfDay();
       case MONTH -> referenceDate.withDayOfMonth(1).atStartOfDay();
       case YEAR -> referenceDate.withDayOfYear(1).atStartOfDay();
     };
+
+    LocalDate endOfPeriod = switch (period) {
+      case WEEK -> referenceDate.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
+      case MONTH -> referenceDate.with(TemporalAdjusters.lastDayOfMonth());
+      case YEAR -> referenceDate.with(TemporalAdjusters.lastDayOfYear());
+    };
+
+    LocalDateTime to = endOfPeriod.isBefore(today)
+        ? endOfPeriod.plusDays(1).atStartOfDay()
+        : LocalDateTime.now();
+
     return reservationStorage.getStatistics(from, to);
   }
 }
