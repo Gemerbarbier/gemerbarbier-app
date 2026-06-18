@@ -128,12 +128,15 @@ export async function cancelAdminReservation(
 
 /**
  * Get service statistics for a period
- * GET /admin/statistics?period={WEEK|MONTH|YEAR}
+ * GET /admin/statistics?period={WEEK|MONTH|YEAR}&date={YYYY-MM-DD}
  */
 export async function getServiceStatistics(
-  period: StatisticsPeriod
+  period: StatisticsPeriod,
+  date?: string
 ): Promise<ApiResponse<ServiceStatisticsResponse[]>> {
-  return httpClient<ServiceStatisticsResponse[]>(`/admin/statistics?period=${period}`);
+  const params = new URLSearchParams({ period });
+  if (date) params.set('date', date);
+  return httpClient<ServiceStatisticsResponse[]>(`/admin/statistics?${params.toString()}`);
 }
 
 // ============= API Object Export =============

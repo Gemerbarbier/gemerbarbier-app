@@ -1,30 +1,34 @@
-import {useCallback, useEffect, useState} from "react";
-import {useNavigate, useSearchParams} from "react-router-dom";
-import {Button} from "@/components/ui/button";
-import {Input} from "@/components/ui/input";
-import {Label} from "@/components/ui/label";
-import {useToast} from "@/hooks/use-toast";
-import {Calendar as CalendarComponent} from "@/components/ui/calendar";
-import {Popover, PopoverContent, PopoverTrigger,} from "@/components/ui/popover";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import {
-  BarChart3,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   Calendar,
-  CalendarIcon,
+  Clock,
+  LogOut,
+  Plus,
+  Scissors,
+  Phone,
+  Mail,
+  X,
   Check,
   ChevronLeft,
   ChevronRight,
-  Clock,
-  Flame,
-  Loader2,
-  LogOut,
-  Mail,
-  Phone,
-  Plus,
-  Scissors,
+  CalendarIcon,
   Sparkles,
-  X,
+  Flame,
+  BarChart3,
+  Loader2,
 } from "lucide-react";
-import {Avatar, AvatarFallback} from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -39,24 +43,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {cn} from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import {
-  cancelAdminReservation,
-  createAdminReservation,
-  deactivateAllTimeSlots,
-  getAdminReservations,
   getAdminTimeSlots,
+  getAdminReservations,
+  createAdminReservation,
+  cancelAdminReservation,
+  updateTimeSlotStatus,
+  deactivateAllTimeSlots,
   getServiceStatistics,
+  type TimeSlotAdmin,
   type ReservationAdmin,
   type ServiceStatisticsResponse,
-  type TimeSlotAdmin,
-  updateTimeSlotStatus,
 } from "@/lib/api/admin-api";
 import {
-  type AvailableTimeSlotResponse,
-  getAvailableSlots,
   getServices,
+  getAvailableSlots,
   type Service,
+  type AvailableTimeSlotResponse,
 } from "@/lib/api";
 
 // Helper: extract HH:mm from a time string (handles both "09:00" and "2026-04-07T09:00:00")
@@ -109,6 +113,7 @@ const AdminDashboard = () => {
     (searchParams.get("tab") as "reservations" | "slots" | "stats") || "reservations"
   );
   const [statsPeriod, setStatsPeriod] = useState<"week" | "month" | "year">("week");
+  const [statsRefDate, setStatsRefDate] = useState<Date>(new Date());
   const [statistics, setStatistics] = useState<ServiceStatisticsResponse[]>([]);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [statsError, setStatsError] = useState<string | null>(null);
@@ -160,7 +165,10 @@ const AdminDashboard = () => {
     setStatsError(null);
     try {
       const period = statsPeriod.toUpperCase() as "WEEK" | "MONTH" | "YEAR";
-      const response = await getServiceStatistics(period);
+      const y = statsRefDate.getFullYear();
+      const m = String(statsRefDate.getMonth() + 1).padStart(2, '0');
+      const d = String(statsRefDate.getDate()).padStart(2, '0');
+      const response = await getServiceStatistics(period, `${y}-${m}-${d}`);
       if (response.success && response.data) {
         setStatistics(response.data);
       } else {
@@ -173,7 +181,7 @@ const AdminDashboard = () => {
     } finally {
       setIsLoadingStats(false);
     }
-  }, [statsPeriod]);
+  }, [statsPeriod, statsRefDate]);
 
   useEffect(() => {
     if (activeTab === "stats") {
@@ -477,6 +485,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Week Calendar with Navigation */}
+        {activeTab !== "stats" && (
         <div className="bg-card border border-border rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
           <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2">
             <div className="flex items-center gap-1 sm:gap-2">
@@ -547,6 +556,9 @@ const AdminDashboard = () => {
             })}
           </div>
         </div>
+        )}
+
+
 
         {/* Reservations Tab */}
         {activeTab === "reservations" && (
@@ -917,45 +929,83 @@ const AdminDashboard = () => {
         )}
 
         {/* Stats Tab */}
-        {activeTab === "stats" && (
+        {activeTab === "stats" && (() => {
+          const formatStatsLabel = () => {
+            const d = statsRefDate;
+            if (statsPeriod === "year") {
+              return String(d.getFullYear());
+            }
+            if (statsPeriod === "month") {
+              return d.toLocaleDateString("sk-SK", { month: "long", year: "numeric" });
+            }
+            const monday = new Date(d);
+            const day = monday.getDay();
+            monday.setDate(monday.getDate() + (day === 0 ? -6 : 1 - day));
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            const fmt = (x: Date) => x.toLocaleDateString("sk-SK", { day: "numeric", month: "short" });
+            return `${fmt(monday)} – ${fmt(sunday)} ${sunday.getFullYear()}`;
+          };
+          const shiftStatsDate = (dir: -1 | 1) => {
+            const nd = new Date(statsRefDate);
+            if (statsPeriod === "year") nd.setFullYear(nd.getFullYear() + dir);
+            else if (statsPeriod === "month") nd.setMonth(nd.getMonth() + dir);
+            else nd.setDate(nd.getDate() + 7 * dir);
+            setStatsRefDate(nd);
+          };
+          const totalRevenue = statistics.reduce((s, x) => s + x.revenue, 0);
+          const totalCount = statistics.reduce((s, x) => s + x.count, 0);
+          return (
           <div className="space-y-4 sm:space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
               <h2 className="text-base sm:text-xl font-semibold">Štatistika služieb</h2>
               <div className="flex gap-1 sm:gap-2">
-                <Button
-                  variant={statsPeriod === "week" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setStatsPeriod("week")}
-                  className={cn(
-                    "text-xs sm:text-sm h-8 px-2 sm:px-3",
-                    statsPeriod === "week" ? "bg-accent text-accent-foreground hover:bg-accent/80" : ""
-                  )}
-                >
-                  Týždeň
-                </Button>
-                <Button
-                  variant={statsPeriod === "month" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setStatsPeriod("month")}
-                  className={cn(
-                    "text-xs sm:text-sm h-8 px-2 sm:px-3",
-                    statsPeriod === "month" ? "bg-accent text-accent-foreground hover:bg-accent/80" : ""
-                  )}
-                >
-                  Mesiac
-                </Button>
-                <Button
-                  variant={statsPeriod === "year" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setStatsPeriod("year")}
-                  className={cn(
-                    "text-xs sm:text-sm h-8 px-2 sm:px-3",
-                    statsPeriod === "year" ? "bg-accent text-accent-foreground hover:bg-accent/80" : ""
-                  )}
-                >
-                  Rok
+                {(["week", "month", "year"] as const).map((p) => (
+                  <Button
+                    key={p}
+                    variant={statsPeriod === p ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setStatsPeriod(p)}
+                    className={cn(
+                      "text-xs sm:text-sm h-8 px-2 sm:px-3",
+                      statsPeriod === p ? "bg-accent text-accent-foreground hover:bg-accent/80" : ""
+                    )}
+                  >
+                    {p === "week" ? "Týždeň" : p === "month" ? "Mesiac" : "Rok"}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Period navigator */}
+            <div className="flex items-center justify-between gap-2 bg-card border border-border rounded-lg px-3 py-2">
+              <Button variant="outline" size="icon" onClick={() => shiftStatsDate(-1)} className="h-8 w-8">
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <div className="flex items-center gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="font-semibold gap-2 text-sm capitalize">
+                      <CalendarIcon className="w-4 h-4" />
+                      {formatStatsLabel()}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="center">
+                    <CalendarComponent
+                      mode="single"
+                      selected={statsRefDate}
+                      onSelect={(date) => date && setStatsRefDate(date)}
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Button variant="outline" size="sm" onClick={() => setStatsRefDate(new Date())} className="text-xs h-8 px-2">
+                  Dnes
                 </Button>
               </div>
+              <Button variant="outline" size="icon" onClick={() => shiftStatsDate(1)} className="h-8 w-8">
+                <ChevronRight className="w-4 h-4" />
+              </Button>
             </div>
 
             <div className="bg-card border border-border rounded-lg p-4 sm:p-6">
@@ -971,22 +1021,16 @@ const AdminDashboard = () => {
                 </p>
               ) : (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-4">
                     <div className="bg-muted/30 rounded-md p-3">
                       <p className="text-xs text-muted-foreground">Rezervácie</p>
-                      <p className="text-lg sm:text-2xl font-semibold">
-                        {statistics.reduce((s, x) => s + x.count, 0)}
-                      </p>
+                      <p className="text-lg sm:text-2xl font-semibold">{totalCount}</p>
                     </div>
-                    <div className="bg-muted/30 rounded-md p-3">
-                      <p className="text-xs text-muted-foreground">Tržby</p>
-                      <p className="text-lg sm:text-2xl font-semibold">
-                        {statistics.reduce((s, x) => s + x.revenue, 0)} €
+                    <div className="rounded-md p-3 bg-accent/10 border border-accent/30">
+                      <p className="text-xs text-accent/80 font-medium uppercase tracking-wide">Tržby</p>
+                      <p className="text-xl sm:text-3xl font-bold text-accent">
+                        {totalRevenue} €
                       </p>
-                    </div>
-                    <div className="bg-muted/30 rounded-md p-3">
-                      <p className="text-xs text-muted-foreground">Služby</p>
-                      <p className="text-lg sm:text-2xl font-semibold">{statistics.length}</p>
                     </div>
                   </div>
 
@@ -1006,7 +1050,7 @@ const AdminDashboard = () => {
                             <tr key={s.serviceName} className="border-b border-border/50 last:border-0">
                               <td className="py-2 pr-2">{s.serviceName}</td>
                               <td className="py-2 px-2 text-right">{s.count}</td>
-                              <td className="py-2 pl-2 text-right font-medium">{s.revenue} €</td>
+                              <td className="py-2 pl-2 text-right font-semibold text-accent">{s.revenue} €</td>
                             </tr>
                           ))}
                       </tbody>
@@ -1016,8 +1060,10 @@ const AdminDashboard = () => {
               )}
             </div>
 
+
           </div>
-        )}
+          );
+        })()}
       </main>
     </div>
   );
