@@ -15,6 +15,9 @@ import {
   Clock,
   LogOut,
   Plus,
+  Trash2,
+  Edit,
+  User,
   Scissors,
   Phone,
   Mail,
@@ -28,7 +31,7 @@ import {
   BarChart3,
   Loader2,
 } from "lucide-react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -314,7 +317,7 @@ const AdminDashboard = () => {
 
     // Convert dd/mm/yyyy to ISO date
     const dateParts = newReservation.date.split('/');
-    const isoDate = dateParts.length === 3
+    const isoDate = dateParts.length === 3 
       ? `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`
       : newReservation.date;
 
@@ -359,8 +362,8 @@ const AdminDashboard = () => {
     if (response.success) {
       toast({
         title: newStatus === 'INACTIVE' ? "Slot odstránený" : "Slot obnovený",
-        description: newStatus === 'INACTIVE'
-          ? "Časový slot bol vyhodený z ponuky."
+        description: newStatus === 'INACTIVE' 
+          ? "Časový slot bol vyhodený z ponuky." 
           : "Časový slot bol vrátený do ponuky.",
       });
       fetchTimeSlots();
@@ -398,6 +401,8 @@ const AdminDashboard = () => {
 
   const weekDates = getWeekDates();
   const dayNames = ["Po", "Ut", "St", "Št", "Pi", "So", "Ne"];
+
+  const getBarberName = () => currentBarberName || "Neznámy";
 
   const getBarberInitials = () => currentBarberName.split(' ').map(n => n[0]).join('');
 
@@ -990,15 +995,146 @@ const AdminDashboard = () => {
                       {formatStatsLabel()}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="center">
-                    <CalendarComponent
-                      mode="single"
-                      selected={statsRefDate}
-                      onSelect={(date) => date && setStatsRefDate(date)}
-                      className={cn("p-3 pointer-events-auto")}
-                    />
+                  <PopoverContent className="w-auto p-3 pointer-events-auto" align="center">
+                    {statsPeriod === "year" && (() => {
+                      const current = statsRefDate.getFullYear();
+                      const start = current - 6;
+                      const years = Array.from({ length: 12 }, (_, i) => start + i);
+                      return (
+                        <div className="grid grid-cols-3 gap-2 w-56">
+                          {years.map((y) => (
+                            <Button
+                              key={y}
+                              variant={y === current ? "default" : "outline"}
+                              size="sm"
+                              className={cn("h-9", y === current && "bg-accent text-accent-foreground hover:bg-accent/80")}
+                              onClick={() => {
+                                const nd = new Date(statsRefDate);
+                                nd.setFullYear(y);
+                                setStatsRefDate(nd);
+                              }}
+                            >
+                              {y}
+                            </Button>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                    {statsPeriod === "month" && (() => {
+                      const year = statsRefDate.getFullYear();
+                      const currentMonth = statsRefDate.getMonth();
+                      const months = ["Jan", "Feb", "Mar", "Apr", "Máj", "Jún", "Júl", "Aug", "Sep", "Okt", "Nov", "Dec"];
+                      return (
+                        <div className="w-56 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                              const nd = new Date(statsRefDate); nd.setFullYear(year - 1); setStatsRefDate(nd);
+                            }}>
+                              <ChevronLeft className="w-4 h-4" />
+                            </Button>
+                            <span className="text-sm font-semibold">{year}</span>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                              const nd = new Date(statsRefDate); nd.setFullYear(year + 1); setStatsRefDate(nd);
+                            }}>
+                              <ChevronRight className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <div className="grid grid-cols-3 gap-2">
+                            {months.map((m, idx) => (
+                              <Button
+                                key={m}
+                                variant={idx === currentMonth ? "default" : "outline"}
+                                size="sm"
+                                className={cn("h-9", idx === currentMonth && "bg-accent text-accent-foreground hover:bg-accent/80")}
+                                onClick={() => {
+                                  const nd = new Date(statsRefDate);
+                                  nd.setDate(1);
+                                  nd.setMonth(idx);
+                                  setStatsRefDate(nd);
+                                }}
+                              >
+                                {m}
+                              </Button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    {statsPeriod === "week" && (() => {
+                      const getMonday = (d: Date) => {
+                        const nd = new Date(d);
+                        const day = nd.getDay();
+                        nd.setDate(nd.getDate() + (day === 0 ? -6 : 1 - day));
+                        nd.setHours(0, 0, 0, 0);
+                        return nd;
+                      };
+                      const getWeekNumber = (d: Date) => {
+                        const target = new Date(d.valueOf());
+                        const dayNr = (d.getDay() + 6) % 7;
+                        target.setDate(target.getDate() - dayNr + 3);
+                        const firstThursday = new Date(target.getFullYear(), 0, 4);
+                        const diff = target.getTime() - firstThursday.getTime();
+                        return 1 + Math.round(diff / (7 * 24 * 3600 * 1000));
+                      };
+                      const year = statsRefDate.getFullYear();
+                      const currentMonday = getMonday(statsRefDate).getTime();
+                      // Generate all weeks of the year
+                      const firstDay = new Date(year, 0, 1);
+                      const firstMonday = getMonday(firstDay);
+                      const weeks: Date[] = [];
+                      const cursor = new Date(firstMonday);
+                      while (cursor.getFullYear() <= year) {
+                        if (cursor.getFullYear() === year || (cursor.getFullYear() === year - 1 && weeks.length === 0)) {
+                          weeks.push(new Date(cursor));
+                        }
+                        cursor.setDate(cursor.getDate() + 7);
+                        if (weeks.length > 53) break;
+                      }
+                      const fmt = (x: Date) => x.toLocaleDateString("sk-SK", { day: "numeric", month: "numeric" });
+                      return (
+                        <div className="w-64 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                              const nd = new Date(statsRefDate); nd.setFullYear(year - 1); setStatsRefDate(nd);
+                            }}>
+                              <ChevronLeft className="w-4 h-4" />
+                            </Button>
+                            <span className="text-sm font-semibold">{year}</span>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
+                              const nd = new Date(statsRefDate); nd.setFullYear(year + 1); setStatsRefDate(nd);
+                            }}>
+                              <ChevronRight className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <div className="max-h-64 overflow-y-auto space-y-1 pr-1">
+                            {weeks.map((monday) => {
+                              const sunday = new Date(monday);
+                              sunday.setDate(monday.getDate() + 6);
+                              const isActive = monday.getTime() === currentMonday;
+                              const wn = getWeekNumber(monday);
+                              return (
+                                <Button
+                                  key={monday.toISOString()}
+                                  variant={isActive ? "default" : "ghost"}
+                                  size="sm"
+                                  className={cn(
+                                    "w-full justify-between h-8 text-xs",
+                                    isActive && "bg-accent text-accent-foreground hover:bg-accent/80"
+                                  )}
+                                  onClick={() => setStatsRefDate(new Date(monday))}
+                                >
+                                  <span className="font-medium">T{wn}</span>
+                                  <span className="text-muted-foreground">{fmt(monday)} – {fmt(sunday)}</span>
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </PopoverContent>
                 </Popover>
+
                 <Button variant="outline" size="sm" onClick={() => setStatsRefDate(new Date())} className="text-xs h-8 px-2">
                   Dnes
                 </Button>

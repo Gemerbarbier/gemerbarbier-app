@@ -1,5 +1,6 @@
 package sk.gemerbarbier.web.rest.controller.admin;
 
+import java.time.LocalDate;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +18,9 @@ public class StatisticsAdminController implements StatisticsAdminApi {
   private final StatisticsGetAdminApi statisticsApi;
 
   @Override
-  public ResponseEntity<List<ServiceStatisticsResponseDto>> getServiceStatistics(String period) {
-    var response = statisticsApi.getStatistics(StatisticsPeriod.valueOf(period)).stream()
+  public ResponseEntity<List<ServiceStatisticsResponseDto>> getServiceStatistics(
+      String period, LocalDate date) {
+    var response = statisticsApi.getStatistics(StatisticsPeriod.valueOf(period), date).stream()
         .map(StatisticsMapper.INSTANCE::toDto)
         .toList();
     return ResponseEntity.ok(response);

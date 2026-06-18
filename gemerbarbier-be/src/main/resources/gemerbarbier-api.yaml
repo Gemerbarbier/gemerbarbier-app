@@ -155,6 +155,12 @@ paths:
       operationId: getServiceStatistics
       parameters:
         - $ref: '#/components/parameters/period'
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
       responses:
         200:
           description: Service statistics

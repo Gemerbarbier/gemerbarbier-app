@@ -19,14 +19,15 @@ public class StatisticsGetAdminService implements StatisticsGetAdminApi {
   private final ReservationStorageApi reservationStorage;
 
   @Override
-  public List<ServiceStatistic> getStatistics(StatisticsPeriod period) {
-    LocalDateTime now = LocalDateTime.now();
+  public List<ServiceStatistic> getStatistics(StatisticsPeriod period, LocalDate date) {
+    LocalDate referenceDate = date != null ? date : LocalDate.now();
+    LocalDateTime to = referenceDate.plusDays(1).atStartOfDay();
     LocalDateTime from = switch (period) {
       case WEEK ->
-          LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).atStartOfDay();
-      case MONTH -> LocalDate.now().withDayOfMonth(1).atStartOfDay();
-      case YEAR -> LocalDate.now().withDayOfYear(1).atStartOfDay();
+          referenceDate.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).atStartOfDay();
+      case MONTH -> referenceDate.withDayOfMonth(1).atStartOfDay();
+      case YEAR -> referenceDate.withDayOfYear(1).atStartOfDay();
     };
-    return reservationStorage.getStatistics(from, now);
+    return reservationStorage.getStatistics(from, to);
   }
 }
