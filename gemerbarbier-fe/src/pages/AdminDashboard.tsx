@@ -537,7 +537,24 @@ const AdminDashboard = () => {
               </PopoverContent>
             </Popover>
           </div>
-          <div className="grid grid-cols-7 gap-1 sm:gap-2">
+          <div
+            className="grid grid-cols-7 gap-1 sm:gap-2 touch-pan-y select-none"
+            onTouchStart={(e) => {
+              (e.currentTarget as any)._touchStartX = e.touches[0].clientX;
+              (e.currentTarget as any)._touchStartY = e.touches[0].clientY;
+            }}
+            onTouchEnd={(e) => {
+              const startX = (e.currentTarget as any)._touchStartX;
+              const startY = (e.currentTarget as any)._touchStartY;
+              if (startX == null) return;
+              const dx = e.changedTouches[0].clientX - startX;
+              const dy = e.changedTouches[0].clientY - startY;
+              if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+                if (dx < 0) goToNextWeek();
+                else goToPreviousWeek();
+              }
+            }}
+          >
             {weekDates.map((date, index) => {
               const isSelected = date === selectedDate;
               const isToday = date === new Date().toISOString().split("T")[0];
@@ -560,6 +577,7 @@ const AdminDashboard = () => {
               );
             })}
           </div>
+
         </div>
         )}
 
@@ -983,7 +1001,24 @@ const AdminDashboard = () => {
             </div>
 
             {/* Period navigator */}
-            <div className="flex items-center justify-between gap-2 bg-card border border-border rounded-lg px-3 py-2">
+            <div
+              className="flex items-center justify-between gap-2 bg-card border border-border rounded-lg px-3 py-2 touch-pan-y select-none"
+              onTouchStart={(e) => {
+                (e.currentTarget as any)._tsx = e.touches[0].clientX;
+                (e.currentTarget as any)._tsy = e.touches[0].clientY;
+              }}
+              onTouchEnd={(e) => {
+                const sx = (e.currentTarget as any)._tsx;
+                const sy = (e.currentTarget as any)._tsy;
+                if (sx == null) return;
+                const dx = e.changedTouches[0].clientX - sx;
+                const dy = e.changedTouches[0].clientY - sy;
+                if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+                  shiftStatsDate(dx < 0 ? 1 : -1);
+                }
+              }}
+            >
+
               <Button variant="outline" size="icon" onClick={() => shiftStatsDate(-1)} className="h-8 w-8">
                 <ChevronLeft className="w-4 h-4" />
               </Button>

@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { Scissors } from "lucide-react";
 import heroImage from "@/assets/hero-barbershop.jpg";
 
 const Hero = () => {
@@ -30,13 +29,6 @@ const Hero = () => {
       {/* Content */}
       <div className="container mx-auto px-4 relative z-10 text-center">
         <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
-          {/* Icon */}
-          <div className="flex justify-center">
-            <div className="p-4 rounded-full bg-accent/10 border border-accent/20 backdrop-blur-sm animate-scale-in">
-              <Scissors className="w-12 h-12 text-accent" />
-            </div>
-          </div>
-
           {/* Main Heading */}
           <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold leading-tight">
             <span className="block text-foreground mb-2">PRÉMIOVÁ</span>
