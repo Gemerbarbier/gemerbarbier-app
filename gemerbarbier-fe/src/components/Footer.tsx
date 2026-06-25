@@ -1,5 +1,5 @@
 import { Facebook, Instagram, Twitter } from "lucide-react";
-import logoMark from "@/assets/gemer-barbier-mark.png.asset.json";
+import logoMark from "@/assets/gb_logo.png";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -13,7 +13,7 @@ const Footer = () => {
             {/* Brand */}
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <img src={logoMark.url} alt="Gemer Barbier logo" className="w-12 h-12 object-contain" />
+                <img src={logoMark} alt="Gemer Barbier logo" className="w-12 h-12 object-contain" />
                 <h3 className="text-2xl font-bold bg-gradient-metallic bg-clip-text text-transparent">
                   GEMERBARBIER
                 </h3>

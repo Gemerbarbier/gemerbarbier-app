@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import logoMark from "@/assets/gemer-barbier-mark.png.asset.json";
+import logoMark from "@/assets/gb_logo.png";
 
 const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -52,7 +52,7 @@ const Navigation = () => {
             className="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity group"
           >
             <img
-              src={logoMark.url}
+              src={logoMark}
               alt="Gemer Barbier logo"
               className="h-9 w-9 sm:h-11 sm:w-11 object-contain drop-shadow-lg group-hover:scale-105 transition-transform"
             />
