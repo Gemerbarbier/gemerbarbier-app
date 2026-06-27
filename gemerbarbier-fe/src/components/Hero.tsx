@@ -112,7 +112,7 @@ const Hero = () => {
               <span className="w-1 h-1 bg-border rounded-full" />
               <span>#TraditionalBarber</span>
               <span className="w-1 h-1 bg-border rounded-full" />
-              <span>Rimavská Sobota</span>
+              <span>Revúca</span>
             </div>
           </div>
         </div>

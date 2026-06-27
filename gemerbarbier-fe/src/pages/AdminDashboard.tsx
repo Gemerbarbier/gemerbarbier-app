@@ -30,7 +30,10 @@ import {
   Flame,
   BarChart3,
   Loader2,
+  Inbox,
+  RefreshCw,
 } from "lucide-react";
+
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Dialog,
@@ -112,14 +115,37 @@ const AdminDashboard = () => {
     const selectedMonday = getMon(selected);
     return Math.round((selectedMonday.getTime() - currentMonday.getTime()) / (7 * 24 * 60 * 60 * 1000));
   });
-  const [activeTab, setActiveTab] = useState<"reservations" | "slots" | "stats">(
-    (searchParams.get("tab") as "reservations" | "slots" | "stats") || "reservations"
+  type TabKey = "reservations" | "slots" | "stats" | "emails";
+  const [activeTab, setActiveTab] = useState<TabKey>(
+    (searchParams.get("tab") as TabKey) || "reservations"
   );
   const [statsPeriod, setStatsPeriod] = useState<"week" | "month" | "year">("week");
   const [statsRefDate, setStatsRefDate] = useState<Date>(new Date());
   const [statistics, setStatistics] = useState<ServiceStatisticsResponse[]>([]);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [statsError, setStatsError] = useState<string | null>(null);
+
+  // Emails tab state
+  type EmailRow = {
+    id: string;
+    template_name: string;
+    recipient_email: string;
+    status: string;
+    attempts: number;
+    last_error: string | null;
+    sent_at: string | null;
+    created_at: string;
+    scheduled_at: string;
+    payload: Record<string, unknown>;
+  };
+  const [emails, setEmails] = useState<EmailRow[]>([]);
+  const [emailCounts, setEmailCounts] = useState({ total: 0, sent: 0, pending: 0, failed: 0 });
+  const [emailTemplates, setEmailTemplates] = useState<string[]>([]);
+  const [emailStatusFilter, setEmailStatusFilter] = useState<string>("all");
+  const [emailTemplateFilter, setEmailTemplateFilter] = useState<string>("all");
+  const [isLoadingEmails, setIsLoadingEmails] = useState(false);
+  const [emailsError, setEmailsError] = useState<string | null>(null);
+  const [selectedEmail, setSelectedEmail] = useState<EmailRow | null>(null);
   const [isAddReservationOpen, setIsAddReservationOpen] = useState(false);
   const [newReservation, setNewReservation] = useState({
     date: "",
@@ -191,6 +217,37 @@ const AdminDashboard = () => {
       fetchStatistics();
     }
   }, [activeTab, fetchStatistics]);
+
+  // Fetch emails
+  const fetchEmails = useCallback(async () => {
+    setIsLoadingEmails(true);
+    setEmailsError(null);
+    try {
+      const projectUrl = import.meta.env.VITE_SUPABASE_URL;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const params = new URLSearchParams();
+      if (emailStatusFilter !== "all") params.set("status", emailStatusFilter);
+      if (emailTemplateFilter !== "all") params.set("template", emailTemplateFilter);
+      const res = await fetch(`${projectUrl}/functions/v1/list-emails?${params.toString()}`, {
+        headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` },
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Chyba načítania emailov");
+      setEmails(json.emails || []);
+      setEmailCounts(json.counts || { total: 0, sent: 0, pending: 0, failed: 0 });
+      setEmailTemplates(json.templates || []);
+    } catch (e) {
+      setEmailsError(e instanceof Error ? e.message : "Chyba načítania emailov");
+    } finally {
+      setIsLoadingEmails(false);
+    }
+  }, [emailStatusFilter, emailTemplateFilter]);
+
+  useEffect(() => {
+    if (activeTab === "emails") {
+      fetchEmails();
+    }
+  }, [activeTab, fetchEmails]);
 
   // Fetch reservations from backend
 
@@ -413,7 +470,7 @@ const AdminDashboard = () => {
     setSelectedDate(new Date().toISOString().split("T")[0]);
   };
 
-  const handleTabChange = (tab: "reservations" | "slots" | "stats") => {
+  const handleTabChange = (tab: TabKey) => {
     setActiveTab(tab);
     const today = new Date().toISOString().split("T")[0];
     setSelectedDate(today);
@@ -487,10 +544,22 @@ const AdminDashboard = () => {
             <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
             Štatistika
           </Button>
+          <Button
+            variant={activeTab === "emails" ? "default" : "outline"}
+            onClick={() => handleTabChange("emails")}
+            size="sm"
+            className={cn(
+              "text-xs sm:text-sm whitespace-nowrap flex-shrink-0",
+              activeTab === "emails" ? "bg-accent text-accent-foreground hover:bg-accent/80" : ""
+            )}
+          >
+            <Inbox className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            Emaily
+          </Button>
         </div>
 
         {/* Week Calendar with Navigation */}
-        {activeTab !== "stats" && (
+        {activeTab !== "stats" && activeTab !== "emails" && (
         <div className="bg-card border border-border rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
           <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2">
             <div className="flex items-center gap-1 sm:gap-2">
@@ -1235,6 +1304,144 @@ const AdminDashboard = () => {
           </div>
           );
         })()}
+
+        {activeTab === "emails" && (
+          <div className="space-y-4 sm:space-y-6">
+            {/* Summary cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
+              {[
+                { label: "Spolu", value: emailCounts.total, color: "text-foreground" },
+                { label: "Odoslané", value: emailCounts.sent, color: "text-emerald-400" },
+                { label: "Čaká", value: emailCounts.pending, color: "text-amber-400" },
+                { label: "Zlyhalo", value: emailCounts.failed, color: "text-red-400" },
+              ].map((c) => (
+                <div key={c.label} className="bg-card border border-border rounded-lg p-3 sm:p-4">
+                  <p className="text-xs sm:text-sm text-muted-foreground">{c.label}</p>
+                  <p className={cn("text-xl sm:text-3xl font-bold mt-1", c.color)}>{c.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Filters */}
+            <div className="bg-card border border-border rounded-lg p-3 sm:p-4 flex flex-wrap gap-2 sm:gap-3 items-end">
+              <div className="flex-1 min-w-[140px]">
+                <Label className="text-xs">Stav</Label>
+                <Select value={emailStatusFilter} onValueChange={setEmailStatusFilter}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Všetky</SelectItem>
+                    <SelectItem value="sent">Odoslané</SelectItem>
+                    <SelectItem value="pending">Čakajúce</SelectItem>
+                    <SelectItem value="failed">Zlyhané</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1 min-w-[140px]">
+                <Label className="text-xs">Šablóna</Label>
+                <Select value={emailTemplateFilter} onValueChange={setEmailTemplateFilter}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Všetky</SelectItem>
+                    {emailTemplates.map((t) => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button variant="outline" size="sm" onClick={fetchEmails} disabled={isLoadingEmails} className="h-9">
+                <RefreshCw className={cn("w-4 h-4 mr-2", isLoadingEmails && "animate-spin")} />
+                Obnoviť
+              </Button>
+            </div>
+
+            {/* List */}
+            <div className="bg-card border border-border rounded-lg overflow-hidden">
+              {isLoadingEmails ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-accent" />
+                </div>
+              ) : emailsError ? (
+                <div className="p-6 text-center text-sm text-red-400">{emailsError}</div>
+              ) : emails.length === 0 ? (
+                <div className="p-6 text-center text-sm text-muted-foreground">Žiadne emaily</div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs sm:text-sm">
+                    <thead className="bg-muted/40 text-muted-foreground">
+                      <tr>
+                        <th className="text-left p-2 sm:p-3 font-medium">Stav</th>
+                        <th className="text-left p-2 sm:p-3 font-medium">Príjemca</th>
+                        <th className="text-left p-2 sm:p-3 font-medium hidden sm:table-cell">Šablóna</th>
+                        <th className="text-left p-2 sm:p-3 font-medium">Vytvorené</th>
+                        <th className="p-2 sm:p-3"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {emails.map((e) => {
+                        const statusStyle =
+                          e.status === "sent" ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" :
+                          e.status === "failed" ? "bg-red-500/15 text-red-400 border-red-500/30" :
+                          "bg-amber-500/15 text-amber-400 border-amber-500/30";
+                        const created = new Date(e.created_at).toLocaleString("sk-SK", {
+                          day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+                        });
+                        return (
+                          <tr key={e.id} className="border-t border-border hover:bg-muted/20">
+                            <td className="p-2 sm:p-3">
+                              <span className={cn("px-2 py-0.5 rounded text-[10px] sm:text-xs border", statusStyle)}>
+                                {e.status}
+                              </span>
+                            </td>
+                            <td className="p-2 sm:p-3 break-all max-w-[160px] sm:max-w-none">{e.recipient_email}</td>
+                            <td className="p-2 sm:p-3 hidden sm:table-cell text-muted-foreground">{e.template_name}</td>
+                            <td className="p-2 sm:p-3 text-muted-foreground whitespace-nowrap">{created}</td>
+                            <td className="p-2 sm:p-3 text-right">
+                              <Button variant="ghost" size="sm" onClick={() => setSelectedEmail(e)} className="h-7 text-xs">
+                                Detail
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        <Dialog open={!!selectedEmail} onOpenChange={(o) => !o && setSelectedEmail(null)}>
+          <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Detail emailu</DialogTitle>
+            </DialogHeader>
+            {selectedEmail && (
+              <div className="space-y-3 text-sm">
+                <div><span className="text-muted-foreground">Stav:</span> {selectedEmail.status}</div>
+                <div><span className="text-muted-foreground">Príjemca:</span> {selectedEmail.recipient_email}</div>
+                <div><span className="text-muted-foreground">Šablóna:</span> {selectedEmail.template_name}</div>
+                <div><span className="text-muted-foreground">Pokusy:</span> {selectedEmail.attempts}</div>
+                <div><span className="text-muted-foreground">Vytvorené:</span> {new Date(selectedEmail.created_at).toLocaleString("sk-SK")}</div>
+                {selectedEmail.sent_at && (
+                  <div><span className="text-muted-foreground">Odoslané:</span> {new Date(selectedEmail.sent_at).toLocaleString("sk-SK")}</div>
+                )}
+                {selectedEmail.last_error && (
+                  <div className="text-red-400">
+                    <div className="text-muted-foreground mb-1">Chyba:</div>
+                    <pre className="bg-muted/40 p-2 rounded text-xs whitespace-pre-wrap">{selectedEmail.last_error}</pre>
+                  </div>
+                )}
+                <div>
+                  <div className="text-muted-foreground mb-1">Payload:</div>
+                  <pre className="bg-muted/40 p-2 rounded text-xs whitespace-pre-wrap overflow-x-auto">
+                    {JSON.stringify(selectedEmail.payload, null, 2)}
+                  </pre>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );

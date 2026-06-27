@@ -7,7 +7,7 @@ const Contact = () => {
     {
       icon: MapPin,
       title: "Adresa",
-      details: ["Ulica 123", "Centrum", "Mesto, 12345"],
+      details: ["Revúca", "050 01", "Slovensko"],
     },
     {
       icon: Phone,
