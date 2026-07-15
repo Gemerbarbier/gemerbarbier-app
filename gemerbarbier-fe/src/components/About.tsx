@@ -1,4 +1,4 @@
-import { Award, Users, Clock } from "lucide-react";
+import { Award, Users, CalendarCheck } from "lucide-react";
 
 const About = () => {
   const features = [
@@ -13,9 +13,9 @@ const About = () => {
       description: "Personalizovaná starostlivosť pre každého klienta",
     },
     {
-      icon: Clock,
-      title: "Flexibilný Čas",
-      description: "Otvorené 7 dní v týždni pre vaše pohodlie",
+      icon: CalendarCheck,
+      title: "Jednoduchá Rezervácia",
+      description: "Online rezervácia termínu 24/7 v priebehu pár sekúnd",
     },
   ];
 

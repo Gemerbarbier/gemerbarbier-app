@@ -91,19 +91,19 @@ const Hero = () => {
             <div className="flex items-center gap-10">
               <div className="flex flex-col">
                 <span className="text-accent font-display font-bold text-3xl leading-none">
-                  1500+
+                  2
                 </span>
                 <span className="text-muted-foreground text-[9px] uppercase font-bold tracking-[0.2em] mt-2">
-                  Spokojných klientov
+                  Majstri remesla
                 </span>
               </div>
               <div className="w-px h-8 bg-border" />
               <div className="flex flex-col">
                 <span className="text-foreground font-display font-bold text-3xl leading-none">
-                  8+
+                  24/7
                 </span>
                 <span className="text-muted-foreground text-[9px] uppercase font-bold tracking-[0.2em] mt-2">
-                  Rokov praxe
+                  Online rezervácia
                 </span>
               </div>
             </div>

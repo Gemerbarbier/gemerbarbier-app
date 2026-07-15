@@ -10,6 +10,7 @@ import Reservation from "@/components/Reservation";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 import Chatbot from "@/components/Chatbot";
+import CookieConsent from "@/components/CookieConsent";
 
 const Index = () => {
   return (
@@ -32,6 +33,7 @@ const Index = () => {
       <Contact />
       <Footer />
       <Chatbot />
+      <CookieConsent />
     </div>
   );
 };

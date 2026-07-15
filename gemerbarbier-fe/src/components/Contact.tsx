@@ -7,22 +7,22 @@ const Contact = () => {
     {
       icon: MapPin,
       title: "Adresa",
-      details: ["Revúca", "050 01", "Slovensko"],
+      details: ["Magnezitárov 1209/9", "050 01 Revúca", "Slovensko"],
     },
     {
       icon: Phone,
       title: "Telefón",
-      details: ["+421 900 123 456", "+421 900 987 654"],
+      details: ["+421 940 194 630", "+421 918 165 273"],
     },
     {
       icon: Mail,
       title: "E-mail",
-      details: ["info@gemerbarbier.sk", "rezervacie@gemerbarbier.sk"],
+      details: ["gemerbarbierra@gmail.com"],
     },
     {
       icon: Clock,
       title: "Otváracie Hodiny",
-      details: ["Pon - Pia: 9:00 - 20:00", "Sob - Ned: 10:00 - 18:00"],
+      details: ["Pon - Pia: 10:00 - 16:00", "Sob - Ned: zatvorené"],
     },
   ];
 

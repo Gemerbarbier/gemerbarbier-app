@@ -9,14 +9,14 @@ const Team = () => {
       name: "Viliam Kroxy Knotek",
       role: "Majster Holič",
       experience: "12 rokov skúseností",
-      specialties: ["Exclusive strihy", "Úprava brady", "Precízny styling"],
+      specialties: ["Poradenstvo pri výbere účesov", "Dlhé strihy", "Moderné strihy a styling"],
       image: viloPicture,
     },
     {
       name: "Jakub Bača Herich",
       role: "Senior Holič",
       experience: "8 rokov skúseností",
-      specialties: ["Moderné strihy", "Úprava brady", "Klasické strihy"],
+      specialties: ["Krátke strihy", "Hair tattoo", "Holenie britvou", "Dlhé brady"],
       image: kuboPicture,
     },
   ];

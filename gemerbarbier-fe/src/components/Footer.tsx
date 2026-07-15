@@ -1,4 +1,4 @@
-import { Facebook, Instagram, Twitter } from "lucide-react";
+import { Instagram } from "lucide-react";
 import logoMark from "@/assets/gb_logo.png";
 
 const Footer = () => {
@@ -51,30 +51,19 @@ const Footer = () => {
               <h4 className="text-lg font-semibold text-foreground">Spojte sa s Nami</h4>
               <div className="flex gap-4">
                 <a
-                  href="#"
-                  className="p-3 rounded-full bg-accent/10 border border-accent/20 hover:bg-accent/20 transition-colors"
-                  aria-label="Facebook"
-                >
-                  <Facebook className="w-5 h-5 text-accent" />
-                </a>
-                <a
-                  href="#"
+                  href="https://www.instagram.com/gemerbarbier/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="p-3 rounded-full bg-accent/10 border border-accent/20 hover:bg-accent/20 transition-colors"
                   aria-label="Instagram"
                 >
                   <Instagram className="w-5 h-5 text-accent" />
                 </a>
-                <a
-                  href="#"
-                  className="p-3 rounded-full bg-accent/10 border border-accent/20 hover:bg-accent/20 transition-colors"
-                  aria-label="Twitter"
-                >
-                  <Twitter className="w-5 h-5 text-accent" />
-                </a>
               </div>
               <div className="text-muted-foreground space-y-1 text-sm">
-                <p>+421 900 123 456</p>
-                <p>info@gemerbarbier.sk</p>
+                <p>+421 940 194 630</p>
+                <p>+421 918 165 273</p>
+                <p>gemerbarbierra@gmail.com</p>
               </div>
             </div>
           </div>
