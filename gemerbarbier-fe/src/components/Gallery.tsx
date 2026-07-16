@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Instagram } from "lucide-react";
 
 const Gallery = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -85,6 +85,25 @@ const Gallery = () => {
               )}
             </div>
           ))}
+        </div>
+
+        {/* Instagram CTA */}
+        <div className="flex justify-center mt-12">
+          <a
+            href="https://www.instagram.com/gemerbarbier/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group relative inline-flex items-center gap-3 px-8 py-4 border border-border/60 bg-card/30 text-muted-foreground uppercase tracking-[0.2em] text-xs font-semibold rounded-sm hover:text-foreground hover:border-accent/50 hover:bg-card/60 transition-all duration-300"
+          >
+            <Instagram className="w-5 h-5 opacity-60 group-hover:opacity-100 transition-opacity" />
+            Zobraziť viac na Instagrame
+
+            {/* Industrial corner rivets */}
+            <span className="absolute -top-px -left-px w-1 h-1 bg-background" />
+            <span className="absolute -top-px -right-px w-1 h-1 bg-background" />
+            <span className="absolute -bottom-px -left-px w-1 h-1 bg-background" />
+            <span className="absolute -bottom-px -right-px w-1 h-1 bg-background" />
+          </a>
         </div>
 
         {/* Modal */}
