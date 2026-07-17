@@ -1,6 +1,7 @@
 package sk.gemerbarbier.service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -26,7 +27,7 @@ public class TimeSlotGetService implements TimeSlotGetApi {
     var service = cutServiceStorage.getCutServiceById(serviceId);
     int requiredSlots = service.getDurationMinutes() / 20;
 
-    var now = LocalDateTime.now();
+    var now = LocalDateTime.now(ZoneId.of("Europe/Bratislava"));
     var to = now.plusDays(30);
 
     var slots = timeSlotStorage.getTimeSlots(barberId, now, to, TimeSlotStatus.ACTIVE);
