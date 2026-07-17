@@ -40,8 +40,8 @@ public class TimeSlotGenerationService {
 
       var day = nextMonday;
       for (int i = 0; i < 5; i++) {
-        var start = day.atTime(9, 0);
-        var end = day.atTime(17, 0);
+        var start = day.atTime(10, 0);
+        var end = day.atTime(16, 0);
 
         while (start.isBefore(end)) {
           var slotEnd = start.plusMinutes(20);
