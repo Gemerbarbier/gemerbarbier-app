@@ -54,7 +54,7 @@ public class TimeSlotGetService implements TimeSlotGetApi {
       var start = slots.get(i).getStartTime();
       var end = slots.get(i + requiredSlots - 1).getEndTime();
 
-      if (start.isBefore(now)) {
+      if (!start.isAfter(now)) {
         continue;
       }
 

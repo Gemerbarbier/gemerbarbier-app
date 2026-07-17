@@ -13,7 +13,7 @@ serve(async (req) => {
   try {
     const { messages } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    
+
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
@@ -29,9 +29,9 @@ serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [
-          { 
-            role: "system", 
-            content: "Si pomocný asistent pre holičstvo Gemerbarbier. Pomáhaš klientom s rezerváciami, informáciami o službách, cenách a odpovedáš na otázky. Buď priateľský a profesionálny. Odpovedaj v slovenčine." 
+          {
+            role: "system",
+            content: "Si pomocný asistent pre barbershop Gemerbarbier. Pomáhaš klientom s rezerváciami, informáciami o službách, cenách a odpovedáš na otázky. Buď priateľský a profesionálny. Odpovedaj v slovenčine."
           },
           ...messages,
         ],

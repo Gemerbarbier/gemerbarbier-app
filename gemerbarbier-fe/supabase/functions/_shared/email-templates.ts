@@ -90,7 +90,7 @@ function reservationConfirmation(p: ReservationPayload) {
       ${row("Čas", p.time)}
       ${row("Služba", p.serviceName)}
       ${row("Trvanie", `${p.serviceDuration} minút`)}
-      ${row("Holič", p.barberName)}
+      ${row("Barber", p.barberName)}
       <tr>
         <td style="padding: 16px 0;"><span style="color: #666; font-size: 14px;">Cena</span></td>
         <td style="padding: 16px 0; text-align: right;"><span style="color: ${BRAND.gold}; font-size: 20px; font-weight: 700;">${p.servicePrice}€</span></td>
@@ -139,7 +139,7 @@ function reservationReminder(p: ReservationPayload) {
       ${row("Dátum", formattedDate)}
       ${row("Čas", p.time)}
       ${row("Služba", p.serviceName)}
-      ${row("Holič", p.barberName, true)}
+      ${row("Barber", p.barberName, true)}
     </table>
     ${divider()}
     <div style="background: rgba(212, 175, 55, 0.1); border-radius: 8px; padding: 16px; margin-top: 16px;">

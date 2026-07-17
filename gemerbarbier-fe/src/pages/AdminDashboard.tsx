@@ -494,7 +494,7 @@ const AdminDashboard = () => {
             <div className="min-w-0">
               <h1 className="font-bold text-sm sm:text-lg truncate">{currentBarberName}</h1>
               <p className="text-xs sm:text-sm text-muted-foreground">
-                {isAdmin ? "Administrátor" : "Holič"}
+                {isAdmin ? "Administrátor" : "Barber"}
               </p>
             </div>
           </div>

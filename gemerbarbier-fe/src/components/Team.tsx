@@ -7,14 +7,14 @@ const Team = () => {
   const barbers = [
     {
       name: "Viliam Kroxy Knotek",
-      role: "Majster Holič",
+      role: "Majster Barber",
       experience: "12 rokov skúseností",
       specialties: ["Poradenstvo pri výbere účesov", "Dlhé strihy", "Moderné strihy a styling"],
       image: viloPicture,
     },
     {
       name: "Jakub Bača Herich",
-      role: "Senior Holič",
+      role: "Senior Barber",
       experience: "8 rokov skúseností",
       specialties: ["Krátke strihy", "Hair tattoo", "Holenie britvou", "Dlhé brady"],
       image: kuboPicture,

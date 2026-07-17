@@ -56,7 +56,7 @@ const Reservation = () => {
       } else {
         toast({
           title: "Chyba",
-          description: "Nepodarilo sa načítať holičov",
+          description: "Nepodarilo sa načítať barberov",
           variant: "destructive",
         });
       }
@@ -118,9 +118,26 @@ const Reservation = () => {
 
   // Derive available dates and times from slots
   const availableDates = new Set(availableSlots.map(s => s.date));
-  const timesForSelectedDate = formData.date
+
+  const isToday = (date: Date) => {
+    const today = new Date();
+    return (
+      date.getDate() === today.getDate() &&
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear()
+    );
+  };
+
+  const now = new Date();
+  const currentTimeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+
+  const rawTimesForSelectedDate = formData.date
     ? availableSlots.find(s => s.date === format(formData.date!, "yyyy-MM-dd"))?.timeList || []
     : [];
+
+  const timesForSelectedDate = formData.date && isToday(formData.date)
+    ? rawTimesForSelectedDate.filter(time => time > currentTimeStr)
+    : rawTimesForSelectedDate;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,7 +187,7 @@ const Reservation = () => {
             serviceName: selectedService?.name || "Služba",
             servicePrice: selectedService?.price || 0,
             serviceDuration: selectedService?.duration || 30,
-            barberName: selectedBarber?.name || "Holič",
+            barberName: selectedBarber?.name || "Barber",
           }),
         });
       } catch (emailError) {
@@ -306,7 +323,7 @@ const Reservation = () => {
 
             {/* Barber Selection */}
             <div className="space-y-2">
-              <Label htmlFor="barberId">Vyberte Holiča *</Label>
+              <Label htmlFor="barberId">Vyberte Barbera *</Label>
               <select
                 id="barberId"
                 name="barberId"
@@ -317,7 +334,7 @@ const Reservation = () => {
                 className="w-full h-10 px-3 rounded-md border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:opacity-50"
               >
                 <option value="" className="text-muted-foreground">
-                  {isLoadingBarbers ? "Načítavam..." : "Vyberte holiča..."}
+                  {isLoadingBarbers ? "Načítavam..." : "Vyberte barbera..."}
                 </option>
                 {barbers.map((barber) => (
                   <option key={barber.id} value={barber.id}>
@@ -341,7 +358,7 @@ const Reservation = () => {
               >
                 <option value="" className="text-muted-foreground">
                   {!formData.barberId 
-                    ? "Najprv vyberte holiča" 
+                    ? "Najprv vyberte barbera" 
                     : isLoadingServices 
                       ? "Načítavam..." 
                       : "Vyberte službu..."}
@@ -356,8 +373,8 @@ const Reservation = () => {
 
             {/* No availability message */}
             {formData.barberId && formData.serviceId && !isLoadingSlots && availableSlots.length === 0 && (
-              <div className="rounded-md border border-accent/40 bg-accent/5 p-4 text-sm text-accent space-y-2">
-                <p>Pre vybraného holiča a službu sú momentálne všetky termíny obsadené. Skúste prosím iného holiča alebo inú službu.</p>
+              <div className="rounded-md border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive space-y-2">
+                <p>Pre vybraného barbera a službu sú momentálne všetky termíny obsadené. Skúste prosím iného barbera alebo inú službu.</p>
                 <p className="font-medium">Nové termíny sa otvárajú v nedeľu o 22:00.</p>
               </div>
             )}
@@ -393,7 +410,9 @@ const Reservation = () => {
                       onSelect={handleDateSelect}
                       disabled={(date) => {
                         const dateStr = format(date, "yyyy-MM-dd");
-                        return date < new Date() || date.getDay() === 0 || !availableDates.has(dateStr);
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        return date < today || date.getDay() === 0 || !availableDates.has(dateStr);
                       }}
                       initialFocus
                       className="pointer-events-auto"

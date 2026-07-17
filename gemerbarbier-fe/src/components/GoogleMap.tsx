@@ -137,6 +137,7 @@ const GoogleMap = () => {
                   center: location,
                   zoom: 16,
                   styles: darkModeStyles,
+                  backgroundColor: "#1a1a1a",
                   mapTypeControl: false,
                   streetViewControl: false,
                   fullscreenControl: true,
