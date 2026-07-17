@@ -21,12 +21,12 @@ public class TimeSlotGenerationService {
   private final TimeSlotStorageApi timeSlotStorageApi;
   private final Logger logger;
 
-  @Scheduled(cron = "0 * * * * *", zone = "Europe/Bratislava")
+  @Scheduled(cron = "0 0 22 * * SUN", zone = "Europe/Bratislava")
   public void generateWeeklySlots() {
     logger.debug("Generating time slots...");
 
     var barberList = barberStorageApi.getBarberList();
-    var nextMonday = LocalDate.now().plusWeeks(1).with(DayOfWeek.MONDAY);
+    var nextMonday = LocalDate.now().plusWeeks(2).with(DayOfWeek.MONDAY);
     var weekEnd = nextMonday.plusDays(5);
 
     for (var barber : barberList) {
