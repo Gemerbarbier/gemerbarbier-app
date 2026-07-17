@@ -354,6 +354,14 @@ const Reservation = () => {
               </select>
             </div>
 
+            {/* No availability message */}
+            {formData.barberId && formData.serviceId && !isLoadingSlots && availableSlots.length === 0 && (
+              <div className="rounded-md border border-accent/40 bg-accent/5 p-4 text-sm text-accent space-y-2">
+                <p>Pre vybraného holiča a službu sú momentálne všetky termíny obsadené. Skúste prosím iného holiča alebo inú službu.</p>
+                <p className="font-medium">Nové termíny sa otvárajú v nedeľu o 22:00.</p>
+              </div>
+            )}
+
             {/* Date and Time */}
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
