@@ -59,6 +59,57 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_queue: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          last_error: string | null
+          max_attempts: number
+          message: string
+          payload: Json
+          provider_message_id: string | null
+          recipient_phone: string
+          scheduled_at: string
+          sent_at: string | null
+          status: string
+          template_name: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          max_attempts?: number
+          message: string
+          payload?: Json
+          provider_message_id?: string | null
+          recipient_phone: string
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: string
+          template_name: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          max_attempts?: number
+          message?: string
+          payload?: Json
+          provider_message_id?: string | null
+          recipient_phone?: string
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: string
+          template_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

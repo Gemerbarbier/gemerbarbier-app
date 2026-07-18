@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2.45.0";
 import type { ReservationPayload } from "../_shared/email-templates.ts";
+import { renderSmsTemplate, normalizePhoneToMsisdn } from "../_shared/sms-templates.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -48,6 +49,40 @@ const handler = async (req: Request): Promise<Response> => {
         scheduled_at: reminderAt.toISOString(),
       });
       if (remErr) console.warn("Reminder queue insert failed:", remErr.message);
+    }
+
+    // Enqueue SMS notifications if phone is provided and normalizable
+    const phone = (payload as Record<string, unknown>).customerPhone as string | undefined;
+    if (phone && normalizePhoneToMsisdn(phone) !== null) {
+      const smsPayload = {
+        customerName: payload.customerName,
+        date: payload.date,
+        time: payload.time,
+        serviceName: payload.serviceName,
+        barberName: payload.barberName,
+      };
+
+      // Confirmation SMS - send ASAP
+      const { error: smsConfirmErr } = await supabase.from("sms_queue").insert({
+        template_name: "reservation_confirmation",
+        recipient_phone: phone,
+        message: renderSmsTemplate("reservation_confirmation", smsPayload),
+        payload: smsPayload,
+        scheduled_at: new Date().toISOString(),
+      });
+      if (smsConfirmErr) console.warn("SMS confirm queue insert failed:", smsConfirmErr.message);
+
+      // Reminder SMS 24h before
+      if (reminderAt.getTime() > Date.now() + 60_000) {
+        const { error: smsRemErr } = await supabase.from("sms_queue").insert({
+          template_name: "reservation_reminder",
+          recipient_phone: phone,
+          message: renderSmsTemplate("reservation_reminder", smsPayload),
+          payload: smsPayload,
+          scheduled_at: reminderAt.toISOString(),
+        });
+        if (smsRemErr) console.warn("SMS reminder queue insert failed:", smsRemErr.message);
+      }
     }
 
     return new Response(JSON.stringify({ success: true, queued: true }), {
