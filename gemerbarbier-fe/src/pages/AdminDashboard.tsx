@@ -1372,7 +1372,8 @@ const AdminDashboard = () => {
                         <th className="text-left p-2 sm:p-3 font-medium">Stav</th>
                         <th className="text-left p-2 sm:p-3 font-medium">Príjemca</th>
                         <th className="text-left p-2 sm:p-3 font-medium hidden sm:table-cell">Šablóna</th>
-                        <th className="text-left p-2 sm:p-3 font-medium">Vytvorené</th>
+                        <th className="text-left p-2 sm:p-3 font-medium">Naplánované</th>
+                        <th className="text-left p-2 sm:p-3 font-medium hidden md:table-cell">Reminder</th>
                         <th className="p-2 sm:p-3"></th>
                       </tr>
                     </thead>
@@ -1382,9 +1383,23 @@ const AdminDashboard = () => {
                           e.status === "sent" ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" :
                           e.status === "failed" ? "bg-red-500/15 text-red-400 border-red-500/30" :
                           "bg-amber-500/15 text-amber-400 border-amber-500/30";
-                        const created = new Date(e.created_at).toLocaleString("sk-SK", {
+                        const fmt = (iso: string) => new Date(iso).toLocaleString("sk-SK", {
                           day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
                         });
+                        const scheduled = fmt(e.scheduled_at || e.created_at);
+                        // Compute reminder time from reservation payload (date + time - 24h)
+                        let reminderInfo = "—";
+                        const p = e.payload as { date?: string; time?: string } | null;
+                        if (p?.date && p?.time) {
+                          const dateOnly = p.date.split("T")[0];
+                          const resDate = new Date(`${dateOnly}T${p.time}:00`);
+                          if (!isNaN(resDate.getTime())) {
+                            const remDate = new Date(resDate.getTime() - 24 * 60 * 60 * 1000);
+                            reminderInfo = e.template_name === "reservation_reminder"
+                              ? `${fmt(e.scheduled_at)} (táto)`
+                              : fmt(remDate.toISOString());
+                          }
+                        }
                         return (
                           <tr key={e.id} className="border-t border-border hover:bg-muted/20">
                             <td className="p-2 sm:p-3">
@@ -1394,7 +1409,8 @@ const AdminDashboard = () => {
                             </td>
                             <td className="p-2 sm:p-3 break-all max-w-[160px] sm:max-w-none">{e.recipient_email}</td>
                             <td className="p-2 sm:p-3 hidden sm:table-cell text-muted-foreground">{e.template_name}</td>
-                            <td className="p-2 sm:p-3 text-muted-foreground whitespace-nowrap">{created}</td>
+                            <td className="p-2 sm:p-3 text-muted-foreground whitespace-nowrap">{scheduled}</td>
+                            <td className="p-2 sm:p-3 hidden md:table-cell text-muted-foreground whitespace-nowrap">{reminderInfo}</td>
                             <td className="p-2 sm:p-3 text-right">
                               <Button variant="ghost" size="sm" onClick={() => setSelectedEmail(e)} className="h-7 text-xs">
                                 Detail

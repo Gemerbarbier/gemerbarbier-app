@@ -8,7 +8,7 @@ const corsHeaders = {
 const RETRY_DELAYS_MIN = [1, 5, 15];
 const BATCH_SIZE = 20;
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/gatewayapi";
-const SENDER = "GemerBarb"; // max 11 alphanumeric chars
+const SENDER = "Gemerbarber"; // max 11 alphanumeric chars
 
 interface SmsQueueRow {
   id: string;

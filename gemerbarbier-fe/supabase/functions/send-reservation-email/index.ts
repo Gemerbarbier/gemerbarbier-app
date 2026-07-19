@@ -62,24 +62,16 @@ const handler = async (req: Request): Promise<Response> => {
         barberName: payload.barberName,
       };
 
-      // Confirmation SMS - send ASAP
-      const { error: smsConfirmErr } = await supabase.from("sms_queue").insert({
-        template_name: "reservation_confirmation",
-        recipient_phone: phone,
-        message: renderSmsTemplate("reservation_confirmation", smsPayload),
-        payload: smsPayload,
-        scheduled_at: new Date().toISOString(),
-      });
-      if (smsConfirmErr) console.warn("SMS confirm queue insert failed:", smsConfirmErr.message);
-
-      // Reminder SMS 24h before
-      if (reminderAt.getTime() > Date.now() + 60_000) {
+      // Reminder SMS at 07:00 on the day of the reservation
+      const dateOnly = payload.date.split("T")[0];
+      const smsReminderAt = new Date(`${dateOnly}T07:00:00`);
+      if (smsReminderAt.getTime() > Date.now() + 60_000) {
         const { error: smsRemErr } = await supabase.from("sms_queue").insert({
           template_name: "reservation_reminder",
           recipient_phone: phone,
           message: renderSmsTemplate("reservation_reminder", smsPayload),
           payload: smsPayload,
-          scheduled_at: reminderAt.toISOString(),
+          scheduled_at: smsReminderAt.toISOString(),
         });
         if (smsRemErr) console.warn("SMS reminder queue insert failed:", smsRemErr.message);
       }

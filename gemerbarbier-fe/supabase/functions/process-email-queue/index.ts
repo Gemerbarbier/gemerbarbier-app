@@ -10,7 +10,7 @@ const corsHeaders = {
 // Retry strategy: 3 attempts with backoff (1m → 5m → 15m)
 const RETRY_DELAYS_MIN = [1, 5, 15];
 const BATCH_SIZE = 20;
-const FROM_ADDRESS = "Gemer Barbier <rezervacie@gemerbarbier.sk>";
+const FROM_ADDRESS = "Gemerbarbier <rezervacie@gemerbarbier.sk>";
 
 interface EmailQueueRow {
   id: string;

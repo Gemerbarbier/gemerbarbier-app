@@ -17,10 +17,10 @@ export function renderSmsTemplate(
   const humanDate = `${d}.${m}.${y}`;
 
   if (template === "reservation_confirmation") {
-    return `GemerBarbier: Rezervacia potvrdena ${humanDate} o ${payload.time}, ${payload.serviceName} (${payload.barberName}). Info: +421 940 194 630`;
+    return `Gemerbarbier: Rezervacia potvrdena ${humanDate} o ${payload.time}, ${payload.serviceName} (${payload.barberName}). Info: +421 940 194 630`;
   }
   // reminder
-  return `GemerBarbier: Pripominame Vasu rezervaciu zajtra ${humanDate} o ${payload.time}, ${payload.serviceName} (${payload.barberName}). Tesime sa!`;
+  return `Gemerbarbier: Pripominame Vasu rezervaciu dnes o ${payload.time}, ${payload.serviceName} (${payload.barberName}). Tesime sa!`;
 }
 
 /** Normalize Slovak-style phone to MSISDN integer (e.g. +421 940 194 630 -> 421940194630). */
