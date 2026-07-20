@@ -59,7 +59,11 @@ public class SecurityConfig {
   public CorsConfigurationSource corsConfigurationSource() {
     var configuration = new CorsConfiguration();
 
-    configuration.setAllowedOrigins(List.of("http://localhost:8081"));
+    configuration.setAllowedOrigins(List.of(
+        "http://localhost:8081",
+        "https://gemerbarbier.sk",
+        "https://www.gemerbarbier.sk"
+    ));
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
     configuration.setAllowedHeaders(List.of("*"));
     configuration.setAllowCredentials(true);

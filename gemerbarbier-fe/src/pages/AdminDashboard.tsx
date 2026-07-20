@@ -541,11 +541,17 @@ const AdminDashboard = () => {
     setSelectedDate(new Date().toISOString().split("T")[0]);
   };
 
+  const localDateStr = (d: Date): string => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+
   const goToNextDay = () => {
     const next = new Date(selectedDate + "T00:00:00");
     next.setDate(next.getDate() + 1);
-    const nextStr = next.toISOString().split("T")[0];
-    setSelectedDate(nextStr);
+    setSelectedDate(localDateStr(next));
     const todayMonday = getMondayOfWeek(new Date());
     const nextMonday = getMondayOfWeek(next);
     setWeekOffset(Math.round((nextMonday.getTime() - todayMonday.getTime()) / (7 * 24 * 60 * 60 * 1000)));
@@ -554,8 +560,7 @@ const AdminDashboard = () => {
   const goToPreviousDay = () => {
     const prev = new Date(selectedDate + "T00:00:00");
     prev.setDate(prev.getDate() - 1);
-    const prevStr = prev.toISOString().split("T")[0];
-    setSelectedDate(prevStr);
+    setSelectedDate(localDateStr(prev));
     const todayMonday = getMondayOfWeek(new Date());
     const prevMonday = getMondayOfWeek(prev);
     setWeekOffset(Math.round((prevMonday.getTime() - todayMonday.getTime()) / (7 * 24 * 60 * 60 * 1000)));
