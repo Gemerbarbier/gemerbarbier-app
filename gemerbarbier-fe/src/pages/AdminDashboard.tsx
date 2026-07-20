@@ -15,9 +15,6 @@ import {
   Clock,
   LogOut,
   Plus,
-  Trash2,
-  Edit,
-  User,
   Scissors,
   Phone,
   Mail,
@@ -34,7 +31,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -129,7 +126,6 @@ const AdminDashboard = () => {
   const reservationsTouchRef = useRef<{ x: number; y: number } | null>(null);
   const calendarTouchRef = useRef<{ x: number; y: number } | null>(null);
   const statsTouchRef = useRef<{ x: number; y: number } | null>(null);
-  const tabTouchRef = useRef<{ x: number; y: number } | null>(null);
 
   // ID of reservation to scroll to after navigating from calendar
   const [scrollToReservationId, setScrollToReservationId] = useState<number | null>(null);
@@ -451,7 +447,7 @@ const AdminDashboard = () => {
 
     // Convert dd/mm/yyyy to ISO date
     const dateParts = newReservation.date.split('/');
-    const isoDate = dateParts.length === 3 
+    const isoDate = dateParts.length === 3
       ? `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`
       : newReservation.date;
 
@@ -496,8 +492,8 @@ const AdminDashboard = () => {
     if (response.success) {
       toast({
         title: newStatus === 'INACTIVE' ? "Slot odstránený" : "Slot obnovený",
-        description: newStatus === 'INACTIVE' 
-          ? "Časový slot bol vyhodený z ponuky." 
+        description: newStatus === 'INACTIVE'
+          ? "Časový slot bol vyhodený z ponuky."
           : "Časový slot bol vrátený do ponuky.",
       });
       fetchTimeSlots();
@@ -536,8 +532,6 @@ const AdminDashboard = () => {
   const weekDates = getWeekDates();
   const dayNames = ["Po", "Ut", "St", "Št", "Pi", "So", "Ne"];
 
-  const getBarberName = () => currentBarberName || "Neznámy";
-
   const getBarberInitials = () => currentBarberName.split(' ').map(n => n[0]).join('');
 
   const goToPreviousWeek = () => setWeekOffset((prev) => prev - 1);
@@ -546,8 +540,6 @@ const AdminDashboard = () => {
     setWeekOffset(0);
     setSelectedDate(new Date().toISOString().split("T")[0]);
   };
-
-  const TAB_ORDER: TabKey[] = ["reservations", "calendar", "slots", "stats", "emails"];
 
   const handleTabChange = (tab: TabKey) => {
     setActiveTab(tab);
@@ -649,26 +641,6 @@ const AdminDashboard = () => {
           </Button>
         </div>
 
-        {/* Swipeable content area – swipe left/right to change tabs */}
-        <div
-          onTouchStart={(e) => {
-            tabTouchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-          }}
-          onTouchEnd={(e) => {
-            if (!tabTouchRef.current) return;
-            const dx = e.changedTouches[0].clientX - tabTouchRef.current.x;
-            const dy = e.changedTouches[0].clientY - tabTouchRef.current.y;
-            tabTouchRef.current = null;
-            if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
-              const currentIdx = TAB_ORDER.indexOf(activeTab);
-              const nextIdx = dx < 0 ? currentIdx + 1 : currentIdx - 1;
-              if (nextIdx >= 0 && nextIdx < TAB_ORDER.length) {
-                handleTabChange(TAB_ORDER[nextIdx]);
-              }
-            }
-          }}
-        >
-
         {/* Week Calendar with Navigation */}
         {activeTab !== "stats" && activeTab !== "emails" && activeTab !== "calendar" && (
         <div className="bg-card border border-border rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
@@ -728,7 +700,6 @@ const AdminDashboard = () => {
               const dy = e.changedTouches[0].clientY - reservationsTouchRef.current.y;
               reservationsTouchRef.current = null;
               if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
-                e.stopPropagation();
                 if (dx < 0) goToNextWeek();
                 else goToPreviousWeek();
               }
@@ -1195,7 +1166,6 @@ const AdminDashboard = () => {
                 const dy = e.changedTouches[0].clientY - statsTouchRef.current.y;
                 statsTouchRef.current = null;
                 if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
-                  e.stopPropagation();
                   shiftStatsDate(dx < 0 ? 1 : -1);
                 }
               }}
@@ -1447,7 +1417,7 @@ const AdminDashboard = () => {
             }
           }
 
-          let headerLabel = "";
+          let headerLabel = '';
           if (calendarView === "week") {
             const first = new Date(dates[0] + "T00:00:00");
             const last = new Date(dates[6] + "T00:00:00");
@@ -1516,7 +1486,6 @@ const AdminDashboard = () => {
                   const dy = e.changedTouches[0].clientY - calendarTouchRef.current.y;
                   calendarTouchRef.current = null;
                   if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
-                    e.stopPropagation();
                     shift(dx < 0 ? 1 : -1);
                   }
                 }}
@@ -1816,7 +1785,6 @@ const AdminDashboard = () => {
             )}
           </DialogContent>
         </Dialog>
-        </div>
       </main>
     </div>
   );
