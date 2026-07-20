@@ -8,6 +8,21 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Convert a Slovak wall-clock (Europe/Bratislava) date+time to a UTC Date.
+function skWallClockToUtc(dateStr: string, timeStr: string): Date {
+  const naiveUtc = new Date(`${dateStr}T${timeStr}:00Z`);
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Europe/Bratislava",
+    timeZoneName: "shortOffset",
+  }).formatToParts(naiveUtc);
+  const tz = parts.find((p) => p.type === "timeZoneName")?.value || "GMT+1";
+  const m = tz.match(/GMT([+-]?\d+)(?::(\d+))?/);
+  const hours = m ? parseInt(m[1], 10) : 1;
+  const minutes = m && m[2] ? parseInt(m[2], 10) : 0;
+  const offsetMs = (hours * 60 + Math.sign(hours || 1) * minutes) * 60_000;
+  return new Date(naiveUtc.getTime() - offsetMs);
+}
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -39,7 +54,8 @@ const handler = async (req: Request): Promise<Response> => {
     if (confirmErr) throw new Error(`Queue insert failed: ${confirmErr.message}`);
 
     // Enqueue reminder for 24h before reservation (only if more than 24h away)
-    const reservationTime = new Date(`${payload.date.split("T")[0]}T${payload.time}:00`);
+    const dateOnlyEmail = payload.date.split("T")[0];
+    const reservationTime = skWallClockToUtc(dateOnlyEmail, payload.time);
     const reminderAt = new Date(reservationTime.getTime() - 24 * 60 * 60 * 1000);
     if (reminderAt.getTime() > Date.now() + 60_000) {
       const { error: remErr } = await supabase.from("email_queue").insert({
@@ -62,9 +78,9 @@ const handler = async (req: Request): Promise<Response> => {
         barberName: payload.barberName,
       };
 
-      // Reminder SMS at 07:00 on the day of the reservation
+      // Reminder SMS at 07:00 Europe/Bratislava on the day of the reservation
       const dateOnly = payload.date.split("T")[0];
-      const smsReminderAt = new Date(`${dateOnly}T07:00:00`);
+      const smsReminderAt = skWallClockToUtc(dateOnly, "07:00");
       if (smsReminderAt.getTime() > Date.now() + 60_000) {
         const { error: smsRemErr } = await supabase.from("sms_queue").insert({
           template_name: "reservation_reminder",

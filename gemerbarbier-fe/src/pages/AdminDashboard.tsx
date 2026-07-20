@@ -115,7 +115,7 @@ const AdminDashboard = () => {
     const selectedMonday = getMon(selected);
     return Math.round((selectedMonday.getTime() - currentMonday.getTime()) / (7 * 24 * 60 * 60 * 1000));
   });
-  type TabKey = "reservations" | "slots" | "stats" | "emails";
+  type TabKey = "reservations" | "calendar" | "slots" | "stats" | "emails";
   const [activeTab, setActiveTab] = useState<TabKey>(
     (searchParams.get("tab") as TabKey) || "reservations"
   );
@@ -124,6 +124,12 @@ const AdminDashboard = () => {
   const [statistics, setStatistics] = useState<ServiceStatisticsResponse[]>([]);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [statsError, setStatsError] = useState<string | null>(null);
+
+  // Calendar tab state
+  const [calendarView, setCalendarView] = useState<"week" | "month">("week");
+  const [calendarRefDate, setCalendarRefDate] = useState<Date>(new Date());
+  const [calendarData, setCalendarData] = useState<Record<string, ReservationAdmin[]>>({});
+  const [isLoadingCalendar, setIsLoadingCalendar] = useState(false);
 
   // Emails tab state
   type EmailRow = {
@@ -197,7 +203,7 @@ const AdminDashboard = () => {
       const y = statsRefDate.getFullYear();
       const m = String(statsRefDate.getMonth() + 1).padStart(2, '0');
       const d = String(statsRefDate.getDate()).padStart(2, '0');
-      const response = await getServiceStatistics(period, `${y}-${m}-${d}`);
+      const response = await getServiceStatistics(period, `${y}-${m}-${d}`, currentBarberId || undefined);
       if (response.success && response.data) {
         setStatistics(response.data);
       } else {
@@ -210,7 +216,7 @@ const AdminDashboard = () => {
     } finally {
       setIsLoadingStats(false);
     }
-  }, [statsPeriod, statsRefDate]);
+  }, [statsPeriod, statsRefDate, currentBarberId]);
 
   useEffect(() => {
     if (activeTab === "stats") {
@@ -248,6 +254,58 @@ const AdminDashboard = () => {
       fetchEmails();
     }
   }, [activeTab, fetchEmails]);
+
+  // Fetch calendar reservations for the visible range
+  const fetchCalendarRange = useCallback(async () => {
+    if (!currentBarberId) return;
+    setIsLoadingCalendar(true);
+    try {
+      const dates: string[] = [];
+      const ref = new Date(calendarRefDate);
+      ref.setHours(0, 0, 0, 0);
+      if (calendarView === "week") {
+        const d = new Date(ref);
+        const day = d.getDay();
+        const diff = day === 0 ? -6 : 1 - day;
+        d.setDate(d.getDate() + diff);
+        for (let i = 0; i < 7; i++) {
+          const dd = new Date(d);
+          dd.setDate(d.getDate() + i);
+          dates.push(`${dd.getFullYear()}-${String(dd.getMonth() + 1).padStart(2, "0")}-${String(dd.getDate()).padStart(2, "0")}`);
+        }
+      } else {
+        const year = ref.getFullYear();
+        const month = ref.getMonth();
+        const first = new Date(year, month, 1);
+        const startDay = first.getDay();
+        const startDiff = startDay === 0 ? -6 : 1 - startDay;
+        const start = new Date(first);
+        start.setDate(first.getDate() + startDiff);
+        for (let i = 0; i < 42; i++) {
+          const dd = new Date(start);
+          dd.setDate(start.getDate() + i);
+          dates.push(`${dd.getFullYear()}-${String(dd.getMonth() + 1).padStart(2, "0")}-${String(dd.getDate()).padStart(2, "0")}`);
+        }
+      }
+      const results = await Promise.all(
+        dates.map((dt) => getAdminReservations(currentBarberId, dt).then((r) => ({ dt, r })))
+      );
+      const map: Record<string, ReservationAdmin[]> = {};
+      for (const { dt, r } of results) {
+        map[dt] = r.success && r.data ? r.data.filter((x) => x.status !== "CANCELLED") : [];
+      }
+      setCalendarData(map);
+    } finally {
+      setIsLoadingCalendar(false);
+    }
+  }, [currentBarberId, calendarView, calendarRefDate]);
+
+  useEffect(() => {
+    if (activeTab === "calendar") {
+      fetchCalendarRange();
+    }
+  }, [activeTab, fetchCalendarRange]);
+
 
   // Fetch reservations from backend
 
@@ -521,6 +579,18 @@ const AdminDashboard = () => {
             Rezervácie
           </Button>
           <Button
+            variant={activeTab === "calendar" ? "default" : "outline"}
+            onClick={() => handleTabChange("calendar")}
+            size="sm"
+            className={cn(
+              "text-xs sm:text-sm whitespace-nowrap flex-shrink-0",
+              activeTab === "calendar" ? "bg-accent text-accent-foreground hover:bg-accent/80" : ""
+            )}
+          >
+            <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            Kalendár
+          </Button>
+          <Button
             variant={activeTab === "slots" ? "default" : "outline"}
             onClick={() => handleTabChange("slots")}
             size="sm"
@@ -559,7 +629,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Week Calendar with Navigation */}
-        {activeTab !== "stats" && activeTab !== "emails" && (
+        {activeTab !== "stats" && activeTab !== "emails" && activeTab !== "calendar" && (
         <div className="bg-card border border-border rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
           <div className="flex items-center justify-between mb-3 sm:mb-4 gap-2">
             <div className="flex items-center gap-1 sm:gap-2">
@@ -1305,6 +1375,208 @@ const AdminDashboard = () => {
           );
         })()}
 
+        {activeTab === "calendar" && (() => {
+          const ref = new Date(calendarRefDate);
+          ref.setHours(0, 0, 0, 0);
+          const monthNames = ["Január","Február","Marec","Apríl","Máj","Jún","Júl","August","September","Október","November","December"];
+          const dayShort = ["Po","Ut","St","Št","Pi","So","Ne"];
+          const todayStr = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; })();
+
+          // Build displayed dates
+          const dates: string[] = [];
+          if (calendarView === "week") {
+            const d = new Date(ref);
+            const day = d.getDay();
+            const diff = day === 0 ? -6 : 1 - day;
+            d.setDate(d.getDate() + diff);
+            for (let i = 0; i < 7; i++) {
+              const dd = new Date(d); dd.setDate(d.getDate() + i);
+              dates.push(`${dd.getFullYear()}-${String(dd.getMonth()+1).padStart(2,"0")}-${String(dd.getDate()).padStart(2,"0")}`);
+            }
+          } else {
+            const first = new Date(ref.getFullYear(), ref.getMonth(), 1);
+            const startDay = first.getDay();
+            const startDiff = startDay === 0 ? -6 : 1 - startDay;
+            const start = new Date(first); start.setDate(first.getDate() + startDiff);
+            for (let i = 0; i < 42; i++) {
+              const dd = new Date(start); dd.setDate(start.getDate() + i);
+              dates.push(`${dd.getFullYear()}-${String(dd.getMonth()+1).padStart(2,"0")}-${String(dd.getDate()).padStart(2,"0")}`);
+            }
+          }
+
+          let headerLabel = "";
+          if (calendarView === "week") {
+            const first = new Date(dates[0] + "T00:00:00");
+            const last = new Date(dates[6] + "T00:00:00");
+            headerLabel = `${first.getDate()}.${first.getMonth()+1}. – ${last.getDate()}.${last.getMonth()+1}.${last.getFullYear()}`;
+          } else {
+            headerLabel = `${monthNames[ref.getMonth()]} ${ref.getFullYear()}`;
+          }
+
+          const shift = (dir: number) => {
+            const nd = new Date(calendarRefDate);
+            if (calendarView === "week") nd.setDate(nd.getDate() + 7 * dir);
+            else nd.setMonth(nd.getMonth() + dir);
+            setCalendarRefDate(nd);
+          };
+
+          const totalCount = Object.values(calendarData).reduce((s, arr) => s + arr.length, 0);
+
+          return (
+            <div className="space-y-4">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-card border border-border rounded-lg p-3 sm:p-4">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base sm:text-xl font-semibold">Kalendár rezervácií</h2>
+                  <span className="text-xs sm:text-sm text-muted-foreground">({totalCount})</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {(["week","month"] as const).map((v) => (
+                    <Button
+                      key={v}
+                      size="sm"
+                      variant={calendarView === v ? "default" : "outline"}
+                      onClick={() => setCalendarView(v)}
+                      className={cn("text-xs sm:text-sm", calendarView === v ? "bg-accent text-accent-foreground hover:bg-accent/80" : "")}
+                    >
+                      {v === "week" ? "Týždeň" : "Mesiac"}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Nav */}
+              <div className="flex items-center justify-between gap-2 bg-card border border-border rounded-lg p-2 sm:p-3">
+                <Button variant="outline" size="icon" onClick={() => shift(-1)} className="h-8 w-8 sm:h-9 sm:w-9">
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <div className="flex items-center gap-2">
+                  <CalendarIcon className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-medium text-sm sm:text-base">{headerLabel}</span>
+                  <Button variant="outline" size="sm" onClick={() => setCalendarRefDate(new Date())} className="text-xs">
+                    Dnes
+                  </Button>
+                </div>
+                <Button variant="outline" size="icon" onClick={() => shift(1)} className="h-8 w-8 sm:h-9 sm:w-9">
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {isLoadingCalendar ? (
+                <div className="flex justify-center py-10">
+                  <Loader2 className="w-6 h-6 animate-spin text-accent" />
+                </div>
+              ) : calendarView === "week" ? (
+                <div className="grid grid-cols-1 md:grid-cols-7 gap-2 sm:gap-3">
+                  {dates.map((dt, i) => {
+                    const list = (calendarData[dt] || []).slice().sort((a, b) => a.startTime.localeCompare(b.startTime));
+                    const d = new Date(dt + "T00:00:00");
+                    const isToday = dt === todayStr;
+                    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                    return (
+                      <div
+                        key={dt}
+                        className={cn(
+                          "bg-card border rounded-lg p-2 sm:p-3 min-h-[140px] flex flex-col",
+                          isToday ? "border-accent" : "border-border",
+                          isWeekend && !isToday ? "opacity-70" : ""
+                        )}
+                      >
+                        <div className="flex items-baseline justify-between mb-2 pb-2 border-b border-border">
+                          <div>
+                            <div className="text-[10px] sm:text-xs uppercase text-muted-foreground">{dayShort[i]}</div>
+                            <div className={cn("text-base sm:text-lg font-bold", isToday ? "text-accent" : "")}>{d.getDate()}.{d.getMonth()+1}.</div>
+                          </div>
+                          <span className="text-xs text-muted-foreground">{list.length}</span>
+                        </div>
+                        <div className="space-y-1.5 flex-1">
+                          {list.length === 0 ? (
+                            <p className="text-[11px] text-muted-foreground italic">Bez rezervácií</p>
+                          ) : (
+                            list.map((r) => {
+                              const cfg = getServiceConfig(r.cutServiceName);
+                              return (
+                                <button
+                                  key={r.id}
+                                  onClick={() => { setSelectedDate(dt); handleTabChange("reservations"); setActiveTab("reservations"); }}
+                                  className={cn(
+                                    "w-full text-left rounded px-2 py-1.5 border transition-colors",
+                                    cfg ? `${cfg.bg} ${cfg.border} hover:brightness-110` : "bg-muted/40 border-border hover:bg-muted/60"
+                                  )}
+                                >
+                                  <div className="flex items-center justify-between gap-1">
+                                    <span className={cn("text-xs font-semibold", cfg?.text)}>{formatTime(r.startTime)}</span>
+                                    <span className="text-[10px] text-muted-foreground truncate max-w-[70px]">{r.customerName}</span>
+                                  </div>
+                                  <div className="text-[10px] text-foreground/70 truncate mt-0.5">{r.cutServiceName}</div>
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="bg-card border border-border rounded-lg p-2 sm:p-3">
+                  <div className="grid grid-cols-7 gap-1 mb-1">
+                    {dayShort.map((d) => (
+                      <div key={d} className="text-center text-[10px] sm:text-xs uppercase text-muted-foreground py-1">{d}</div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-7 gap-1">
+                    {dates.map((dt) => {
+                      const d = new Date(dt + "T00:00:00");
+                      const list = (calendarData[dt] || []).slice().sort((a, b) => a.startTime.localeCompare(b.startTime));
+                      const inMonth = d.getMonth() === ref.getMonth();
+                      const isToday = dt === todayStr;
+                      return (
+                        <button
+                          key={dt}
+                          onClick={() => { setSelectedDate(dt); setActiveTab("reservations"); }}
+                          className={cn(
+                            "min-h-[80px] sm:min-h-[110px] text-left rounded border p-1.5 flex flex-col gap-1 transition-colors",
+                            isToday ? "border-accent" : "border-border",
+                            inMonth ? "bg-background hover:bg-muted/40" : "bg-muted/20 opacity-50 hover:opacity-80"
+                          )}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className={cn("text-xs font-bold", isToday ? "text-accent" : "")}>{d.getDate()}</span>
+                            {list.length > 0 && (
+                              <span className="text-[10px] px-1.5 rounded-full bg-accent/20 text-accent">{list.length}</span>
+                            )}
+                          </div>
+                          <div className="space-y-0.5 flex-1 overflow-hidden">
+                            {list.slice(0, 3).map((r) => {
+                              const cfg = getServiceConfig(r.cutServiceName);
+                              return (
+                                <div
+                                  key={r.id}
+                                  className={cn(
+                                    "text-[9px] sm:text-[10px] rounded px-1 py-0.5 truncate border",
+                                    cfg ? `${cfg.bg} ${cfg.border} ${cfg.text}` : "bg-muted/40 border-border"
+                                  )}
+                                >
+                                  {formatTime(r.startTime)} {r.customerName}
+                                </div>
+                              );
+                            })}
+                            {list.length > 3 && (
+                              <div className="text-[9px] text-muted-foreground">+{list.length - 3}</div>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+
         {activeTab === "emails" && (
           <div className="space-y-4 sm:space-y-6">
             {/* Summary cards */}
@@ -1372,36 +1644,43 @@ const AdminDashboard = () => {
                         <th className="text-left p-2 sm:p-3 font-medium">Stav</th>
                         <th className="text-left p-2 sm:p-3 font-medium">Príjemca</th>
                         <th className="text-left p-2 sm:p-3 font-medium hidden sm:table-cell">Šablóna</th>
-                        <th className="text-left p-2 sm:p-3 font-medium">Naplánované</th>
-                        <th className="text-left p-2 sm:p-3 font-medium hidden md:table-cell">Reminder</th>
+                        <th className="text-left p-2 sm:p-3 font-medium">Vytvorené</th>
+                        <th className="text-left p-2 sm:p-3 font-medium">Odoslané</th>
                         <th className="p-2 sm:p-3"></th>
                       </tr>
                     </thead>
                     <tbody>
                       {emails.map((e) => {
+                        const isPendingReminder =
+                          e.status === "pending" && e.template_name === "reservation_reminder";
                         const statusStyle =
                           e.status === "sent" ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" :
                           e.status === "failed" ? "bg-red-500/15 text-red-400 border-red-500/30" :
                           "bg-amber-500/15 text-amber-400 border-amber-500/30";
                         const fmt = (iso: string) => new Date(iso).toLocaleString("sk-SK", {
-                          day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+                          day: "2-digit", month: "2-digit", year: "numeric",
+                          hour: "2-digit", minute: "2-digit",
+                          timeZone: "Europe/Bratislava",
                         });
-                        const scheduled = fmt(e.scheduled_at || e.created_at);
-                        // Compute reminder time from reservation payload (date + time - 24h)
-                        let reminderInfo = "—";
-                        const p = e.payload as { date?: string; time?: string } | null;
-                        if (p?.date && p?.time) {
-                          const dateOnly = p.date.split("T")[0];
-                          const resDate = new Date(`${dateOnly}T${p.time}:00`);
-                          if (!isNaN(resDate.getTime())) {
-                            const remDate = new Date(resDate.getTime() - 24 * 60 * 60 * 1000);
-                            reminderInfo = e.template_name === "reservation_reminder"
-                              ? `${fmt(e.scheduled_at)} (táto)`
-                              : fmt(remDate.toISOString());
-                          }
+                        const createdCell = fmt(e.created_at);
+                        let sentCell: React.ReactNode = "—";
+                        if (e.status === "sent" && e.sent_at) {
+                          sentCell = fmt(e.sent_at);
+                        } else if (e.status === "pending" && e.scheduled_at) {
+                          sentCell = (
+                            <span className="text-amber-400">Bude: {fmt(e.scheduled_at)}</span>
+                          );
+                        } else if (e.status === "failed") {
+                          sentCell = <span className="text-red-400">Zlyhalo</span>;
                         }
                         return (
-                          <tr key={e.id} className="border-t border-border hover:bg-muted/20">
+                          <tr
+                            key={e.id}
+                            className={cn(
+                              "border-t border-border hover:bg-muted/20",
+                              isPendingReminder && "bg-amber-500/5",
+                            )}
+                          >
                             <td className="p-2 sm:p-3">
                               <span className={cn("px-2 py-0.5 rounded text-[10px] sm:text-xs border", statusStyle)}>
                                 {e.status}
@@ -1409,8 +1688,8 @@ const AdminDashboard = () => {
                             </td>
                             <td className="p-2 sm:p-3 break-all max-w-[160px] sm:max-w-none">{e.recipient_email}</td>
                             <td className="p-2 sm:p-3 hidden sm:table-cell text-muted-foreground">{e.template_name}</td>
-                            <td className="p-2 sm:p-3 text-muted-foreground whitespace-nowrap">{scheduled}</td>
-                            <td className="p-2 sm:p-3 hidden md:table-cell text-muted-foreground whitespace-nowrap">{reminderInfo}</td>
+                            <td className="p-2 sm:p-3 text-muted-foreground whitespace-nowrap">{createdCell}</td>
+                            <td className="p-2 sm:p-3 whitespace-nowrap">{sentCell}</td>
                             <td className="p-2 sm:p-3 text-right">
                               <Button variant="ghost" size="sm" onClick={() => setSelectedEmail(e)} className="h-7 text-xs">
                                 Detail
@@ -1421,6 +1700,7 @@ const AdminDashboard = () => {
                       })}
                     </tbody>
                   </table>
+
                 </div>
               )}
             </div>

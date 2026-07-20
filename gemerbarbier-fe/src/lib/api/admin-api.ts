@@ -132,10 +132,12 @@ export async function cancelAdminReservation(
  */
 export async function getServiceStatistics(
   period: StatisticsPeriod,
-  date?: string
+  date?: string,
+  barberId?: string,
 ): Promise<ApiResponse<ServiceStatisticsResponse[]>> {
   const params = new URLSearchParams({ period });
   if (date) params.set('date', date);
+  if (barberId) params.set('barberId', barberId);
   return httpClient<ServiceStatisticsResponse[]>(`/admin/statistics?${params.toString()}`);
 }
 
