@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -124,6 +124,13 @@ const AdminDashboard = () => {
   const [statistics, setStatistics] = useState<ServiceStatisticsResponse[]>([]);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [statsError, setStatsError] = useState<string | null>(null);
+
+  // Touch swipe refs (more reliable than storing on DOM element properties)
+  const reservationsTouchRef = useRef<{ x: number; y: number } | null>(null);
+  const calendarTouchRef = useRef<{ x: number; y: number } | null>(null);
+
+  // ID of reservation to scroll to after navigating from calendar
+  const [scrollToReservationId, setScrollToReservationId] = useState<number | null>(null);
 
   // Calendar tab state
   const [calendarView, setCalendarView] = useState<"week" | "month">("week");
@@ -351,6 +358,16 @@ const AdminDashboard = () => {
       fetchTimeSlots();
     }
   }, [currentBarberId, selectedDate, fetchReservations, fetchTimeSlots]);
+
+  // Scroll to reservation after navigating from calendar tab
+  useEffect(() => {
+    if (scrollToReservationId == null || activeTab !== "reservations") return;
+    const el = document.getElementById(`reservation-${scrollToReservationId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setScrollToReservationId(null);
+    }
+  }, [reservations, scrollToReservationId, activeTab]);
 
   // Fetch services for admin reservation form
   const fetchServicesForForm = useCallback(async () => {
@@ -679,15 +696,13 @@ const AdminDashboard = () => {
           <div
             className="grid grid-cols-7 gap-1 sm:gap-2 touch-pan-y select-none"
             onTouchStart={(e) => {
-              (e.currentTarget as any)._touchStartX = e.touches[0].clientX;
-              (e.currentTarget as any)._touchStartY = e.touches[0].clientY;
+              reservationsTouchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
             }}
             onTouchEnd={(e) => {
-              const startX = (e.currentTarget as any)._touchStartX;
-              const startY = (e.currentTarget as any)._touchStartY;
-              if (startX == null) return;
-              const dx = e.changedTouches[0].clientX - startX;
-              const dy = e.changedTouches[0].clientY - startY;
+              if (!reservationsTouchRef.current) return;
+              const dx = e.changedTouches[0].clientX - reservationsTouchRef.current.x;
+              const dy = e.changedTouches[0].clientY - reservationsTouchRef.current.y;
+              reservationsTouchRef.current = null;
               if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
                 if (dx < 0) goToNextWeek();
                 else goToPreviousWeek();
@@ -925,6 +940,7 @@ const AdminDashboard = () => {
                     return (
                       <div
                         key={reservation.id}
+                        id={`reservation-${reservation.id}`}
                         className={cn(
                           "bg-card border-l-4 rounded-lg p-4",
                           serviceConfig?.border || "border-border",
@@ -962,10 +978,13 @@ const AdminDashboard = () => {
                                 {/* Additional details */}
                                 <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1.5">
                                   {reservation.customerPhone && (
-                                    <span className="flex items-center gap-1 text-[11px] sm:text-xs text-muted-foreground">
+                                    <a
+                                      href={`tel:${reservation.customerPhone.replace(/\s+/g, "")}`}
+                                      className="flex items-center gap-1 text-[11px] sm:text-xs text-muted-foreground hover:text-accent transition-colors"
+                                    >
                                       <Phone className="w-3 h-3" />
                                       {reservation.customerPhone}
-                                    </span>
+                                    </a>
                                   )}
                                   {reservation.customerEmail && (
                                     <span className="flex items-center gap-1 text-[11px] sm:text-xs text-muted-foreground">
@@ -1465,15 +1484,13 @@ const AdminDashboard = () => {
               <div
                 className="touch-pan-y select-none"
                 onTouchStart={(e) => {
-                  (e.currentTarget as any)._tsx = e.touches[0].clientX;
-                  (e.currentTarget as any)._tsy = e.touches[0].clientY;
+                  calendarTouchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
                 }}
                 onTouchEnd={(e) => {
-                  const sx = (e.currentTarget as any)._tsx;
-                  const sy = (e.currentTarget as any)._tsy;
-                  if (sx == null) return;
-                  const dx = e.changedTouches[0].clientX - sx;
-                  const dy = e.changedTouches[0].clientY - sy;
+                  if (!calendarTouchRef.current) return;
+                  const dx = e.changedTouches[0].clientX - calendarTouchRef.current.x;
+                  const dy = e.changedTouches[0].clientY - calendarTouchRef.current.y;
+                  calendarTouchRef.current = null;
                   if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
                     shift(dx < 0 ? 1 : -1);
                   }
@@ -1515,7 +1532,16 @@ const AdminDashboard = () => {
                               return (
                                 <button
                                   key={r.id}
-                                  onClick={() => { setSelectedDate(dt); handleTabChange("reservations"); setActiveTab("reservations"); }}
+                                  onClick={() => {
+                                    setSelectedDate(dt);
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    const targetMonday = getMondayOfWeek(new Date(dt + "T00:00:00"));
+                                    const todayMonday = getMondayOfWeek(today);
+                                    setWeekOffset(Math.round((targetMonday.getTime() - todayMonday.getTime()) / (7 * 24 * 60 * 60 * 1000)));
+                                    setScrollToReservationId(r.id);
+                                    setActiveTab("reservations");
+                                  }}
                                   className={cn(
                                     "w-full text-left rounded px-2 py-1.5 border transition-colors",
                                     cfg ? `${cfg.bg} ${cfg.border} hover:brightness-110` : "bg-muted/40 border-border hover:bg-muted/60"
@@ -1551,7 +1577,15 @@ const AdminDashboard = () => {
                       return (
                         <button
                           key={dt}
-                          onClick={() => { setSelectedDate(dt); setActiveTab("reservations"); }}
+                          onClick={() => {
+                            setSelectedDate(dt);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const targetMonday = getMondayOfWeek(new Date(dt + "T00:00:00"));
+                            const todayMonday = getMondayOfWeek(today);
+                            setWeekOffset(Math.round((targetMonday.getTime() - todayMonday.getTime()) / (7 * 24 * 60 * 60 * 1000)));
+                            setActiveTab("reservations");
+                          }}
                           className={cn(
                             "min-h-[80px] sm:min-h-[110px] text-left rounded border p-1.5 flex flex-col gap-1 transition-colors",
                             isToday ? "border-accent" : "border-border",
