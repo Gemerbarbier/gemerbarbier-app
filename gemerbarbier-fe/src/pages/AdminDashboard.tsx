@@ -128,6 +128,8 @@ const AdminDashboard = () => {
   // Touch swipe refs (more reliable than storing on DOM element properties)
   const reservationsTouchRef = useRef<{ x: number; y: number } | null>(null);
   const calendarTouchRef = useRef<{ x: number; y: number } | null>(null);
+  const statsTouchRef = useRef<{ x: number; y: number } | null>(null);
+  const tabTouchRef = useRef<{ x: number; y: number } | null>(null);
 
   // ID of reservation to scroll to after navigating from calendar
   const [scrollToReservationId, setScrollToReservationId] = useState<number | null>(null);
@@ -545,6 +547,8 @@ const AdminDashboard = () => {
     setSelectedDate(new Date().toISOString().split("T")[0]);
   };
 
+  const TAB_ORDER: TabKey[] = ["reservations", "calendar", "slots", "stats", "emails"];
+
   const handleTabChange = (tab: TabKey) => {
     setActiveTab(tab);
     const today = new Date().toISOString().split("T")[0];
@@ -645,6 +649,26 @@ const AdminDashboard = () => {
           </Button>
         </div>
 
+        {/* Swipeable content area – swipe left/right to change tabs */}
+        <div
+          onTouchStart={(e) => {
+            tabTouchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+          }}
+          onTouchEnd={(e) => {
+            if (!tabTouchRef.current) return;
+            const dx = e.changedTouches[0].clientX - tabTouchRef.current.x;
+            const dy = e.changedTouches[0].clientY - tabTouchRef.current.y;
+            tabTouchRef.current = null;
+            if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+              const currentIdx = TAB_ORDER.indexOf(activeTab);
+              const nextIdx = dx < 0 ? currentIdx + 1 : currentIdx - 1;
+              if (nextIdx >= 0 && nextIdx < TAB_ORDER.length) {
+                handleTabChange(TAB_ORDER[nextIdx]);
+              }
+            }
+          }}
+        >
+
         {/* Week Calendar with Navigation */}
         {activeTab !== "stats" && activeTab !== "emails" && activeTab !== "calendar" && (
         <div className="bg-card border border-border rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
@@ -704,6 +728,7 @@ const AdminDashboard = () => {
               const dy = e.changedTouches[0].clientY - reservationsTouchRef.current.y;
               reservationsTouchRef.current = null;
               if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+                e.stopPropagation();
                 if (dx < 0) goToNextWeek();
                 else goToPreviousWeek();
               }
@@ -983,7 +1008,7 @@ const AdminDashboard = () => {
                                       className="flex items-center gap-1 text-[11px] sm:text-xs text-muted-foreground hover:text-accent transition-colors"
                                     >
                                       <Phone className="w-3 h-3" />
-                                      {reservation.customerPhone}
+                                      {reservation.customerPhone.startsWith("+") ? reservation.customerPhone : `+${reservation.customerPhone}`}
                                     </a>
                                   )}
                                   {reservation.customerEmail && (
@@ -1162,16 +1187,15 @@ const AdminDashboard = () => {
             <div
               className="flex items-center justify-between gap-2 bg-card border border-border rounded-lg px-3 py-2 touch-pan-y select-none"
               onTouchStart={(e) => {
-                (e.currentTarget as any)._tsx = e.touches[0].clientX;
-                (e.currentTarget as any)._tsy = e.touches[0].clientY;
+                statsTouchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
               }}
               onTouchEnd={(e) => {
-                const sx = (e.currentTarget as any)._tsx;
-                const sy = (e.currentTarget as any)._tsy;
-                if (sx == null) return;
-                const dx = e.changedTouches[0].clientX - sx;
-                const dy = e.changedTouches[0].clientY - sy;
+                if (!statsTouchRef.current) return;
+                const dx = e.changedTouches[0].clientX - statsTouchRef.current.x;
+                const dy = e.changedTouches[0].clientY - statsTouchRef.current.y;
+                statsTouchRef.current = null;
                 if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+                  e.stopPropagation();
                   shiftStatsDate(dx < 0 ? 1 : -1);
                 }
               }}
@@ -1492,6 +1516,7 @@ const AdminDashboard = () => {
                   const dy = e.changedTouches[0].clientY - calendarTouchRef.current.y;
                   calendarTouchRef.current = null;
                   if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+                    e.stopPropagation();
                     shift(dx < 0 ? 1 : -1);
                   }
                 }}
@@ -1791,6 +1816,7 @@ const AdminDashboard = () => {
             )}
           </DialogContent>
         </Dialog>
+        </div>
       </main>
     </div>
   );
