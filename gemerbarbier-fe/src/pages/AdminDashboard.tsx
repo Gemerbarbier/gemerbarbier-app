@@ -735,7 +735,22 @@ const AdminDashboard = () => {
 
         {/* Reservations Tab */}
         {activeTab === "reservations" && (
-          <div className="space-y-3 sm:space-y-4">
+          <div
+            className="space-y-3 sm:space-y-4 touch-pan-y"
+            onTouchStart={(e) => {
+              reservationsTouchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }}
+            onTouchEnd={(e) => {
+              if (!reservationsTouchRef.current) return;
+              const dx = e.changedTouches[0].clientX - reservationsTouchRef.current.x;
+              const dy = e.changedTouches[0].clientY - reservationsTouchRef.current.y;
+              reservationsTouchRef.current = null;
+              if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+                if (dx < 0) goToNextWeek();
+                else goToPreviousWeek();
+              }
+            }}
+          >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
               <h2 className="text-base sm:text-xl font-semibold">
                 Rezervácie na {new Date(selectedDate).toLocaleDateString("sk-SK")}
@@ -1019,7 +1034,22 @@ const AdminDashboard = () => {
 
         {/* Time Slots Tab */}
         {activeTab === "slots" && (
-          <div className="space-y-3 sm:space-y-4">
+          <div
+            className="space-y-3 sm:space-y-4 touch-pan-y"
+            onTouchStart={(e) => {
+              reservationsTouchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }}
+            onTouchEnd={(e) => {
+              if (!reservationsTouchRef.current) return;
+              const dx = e.changedTouches[0].clientX - reservationsTouchRef.current.x;
+              const dy = e.changedTouches[0].clientY - reservationsTouchRef.current.y;
+              reservationsTouchRef.current = null;
+              if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+                if (dx < 0) goToNextWeek();
+                else goToPreviousWeek();
+              }
+            }}
+          >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
               <h2 className="text-base sm:text-xl font-semibold">
                 Časové sloty na {new Date(selectedDate).toLocaleDateString("sk-SK")}
@@ -1133,7 +1163,21 @@ const AdminDashboard = () => {
           const totalRevenue = statistics.reduce((s, x) => s + x.revenue, 0);
           const totalCount = statistics.reduce((s, x) => s + x.count, 0);
           return (
-          <div className="space-y-4 sm:space-y-6">
+          <div
+            className="space-y-4 sm:space-y-6 touch-pan-y"
+            onTouchStart={(e) => {
+              statsTouchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }}
+            onTouchEnd={(e) => {
+              if (!statsTouchRef.current) return;
+              const dx = e.changedTouches[0].clientX - statsTouchRef.current.x;
+              const dy = e.changedTouches[0].clientY - statsTouchRef.current.y;
+              statsTouchRef.current = null;
+              if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+                shiftStatsDate(dx < 0 ? 1 : -1);
+              }
+            }}
+          >
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
               <h2 className="text-base sm:text-xl font-semibold">Štatistika služieb</h2>
               <div className="flex gap-1 sm:gap-2">
