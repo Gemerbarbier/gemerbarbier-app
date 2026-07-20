@@ -541,6 +541,26 @@ const AdminDashboard = () => {
     setSelectedDate(new Date().toISOString().split("T")[0]);
   };
 
+  const goToNextDay = () => {
+    const next = new Date(selectedDate + "T00:00:00");
+    next.setDate(next.getDate() + 1);
+    const nextStr = next.toISOString().split("T")[0];
+    setSelectedDate(nextStr);
+    const todayMonday = getMondayOfWeek(new Date());
+    const nextMonday = getMondayOfWeek(next);
+    setWeekOffset(Math.round((nextMonday.getTime() - todayMonday.getTime()) / (7 * 24 * 60 * 60 * 1000)));
+  };
+
+  const goToPreviousDay = () => {
+    const prev = new Date(selectedDate + "T00:00:00");
+    prev.setDate(prev.getDate() - 1);
+    const prevStr = prev.toISOString().split("T")[0];
+    setSelectedDate(prevStr);
+    const todayMonday = getMondayOfWeek(new Date());
+    const prevMonday = getMondayOfWeek(prev);
+    setWeekOffset(Math.round((prevMonday.getTime() - todayMonday.getTime()) / (7 * 24 * 60 * 60 * 1000)));
+  };
+
   const handleTabChange = (tab: TabKey) => {
     setActiveTab(tab);
     const today = new Date().toISOString().split("T")[0];
@@ -746,8 +766,8 @@ const AdminDashboard = () => {
               const dy = e.changedTouches[0].clientY - reservationsTouchRef.current.y;
               reservationsTouchRef.current = null;
               if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
-                if (dx < 0) goToNextWeek();
-                else goToPreviousWeek();
+                if (dx < 0) goToNextDay();
+                else goToPreviousDay();
               }
             }}
           >
@@ -1045,8 +1065,8 @@ const AdminDashboard = () => {
               const dy = e.changedTouches[0].clientY - reservationsTouchRef.current.y;
               reservationsTouchRef.current = null;
               if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
-                if (dx < 0) goToNextWeek();
-                else goToPreviousWeek();
+                if (dx < 0) goToNextDay();
+                else goToPreviousDay();
               }
             }}
           >
