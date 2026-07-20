@@ -19,8 +19,8 @@ public class StatisticsAdminController implements StatisticsAdminApi {
 
   @Override
   public ResponseEntity<List<ServiceStatisticsResponseDto>> getServiceStatistics(
-      String period, LocalDate date) {
-    var response = statisticsApi.getStatistics(StatisticsPeriod.valueOf(period), date).stream()
+      String period, LocalDate date, Long barberId) {
+    var response = statisticsApi.getStatistics(StatisticsPeriod.valueOf(period), date, barberId).stream()
         .map(StatisticsMapper.INSTANCE::toDto)
         .toList();
     return ResponseEntity.ok(response);

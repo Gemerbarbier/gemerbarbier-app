@@ -54,12 +54,35 @@ const Contact = () => {
                 </div>
                 <h3 className="text-lg font-semibold">{info.title}</h3>
                 <div className="space-y-1">
-                  {info.details.map((detail, i) => (
-                    <p key={i} className="text-sm text-muted-foreground">
-                      {detail}
-                    </p>
-                  ))}
+                  {info.details.map((detail, i) => {
+                    const isPhone = info.title === "Telefón";
+                    const isEmail = info.title === "E-mail";
+                    if (isPhone) {
+                      return (
+                        <p key={i} className="text-sm text-muted-foreground">
+                          <a href={`tel:${detail.replace(/\s+/g, "")}`} className="hover:text-accent transition-colors">
+                            {detail}
+                          </a>
+                        </p>
+                      );
+                    }
+                    if (isEmail) {
+                      return (
+                        <p key={i} className="text-sm text-muted-foreground">
+                          <a href={`mailto:${detail}`} className="hover:text-accent transition-colors">
+                            {detail}
+                          </a>
+                        </p>
+                      );
+                    }
+                    return (
+                      <p key={i} className="text-sm text-muted-foreground">
+                        {detail}
+                      </p>
+                    );
+                  })}
                 </div>
+
               </div>
             </Card>
           ))}

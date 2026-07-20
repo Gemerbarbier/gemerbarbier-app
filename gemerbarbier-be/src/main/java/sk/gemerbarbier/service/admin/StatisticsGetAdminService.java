@@ -19,7 +19,7 @@ public class StatisticsGetAdminService implements StatisticsGetAdminApi {
   private final ReservationStorageApi reservationStorage;
 
   @Override
-  public List<ServiceStatistic> getStatistics(StatisticsPeriod period, LocalDate date) {
+  public List<ServiceStatistic> getStatistics(StatisticsPeriod period, LocalDate date, Long barberId) {
     LocalDate referenceDate = date != null ? date : LocalDate.now();
     LocalDate today = LocalDate.now();
 
@@ -40,6 +40,6 @@ public class StatisticsGetAdminService implements StatisticsGetAdminApi {
         ? endOfPeriod.plusDays(1).atStartOfDay()
         : LocalDateTime.now();
 
-    return reservationStorage.getStatistics(from, to);
+    return reservationStorage.getStatistics(from, to, barberId);
   }
 }

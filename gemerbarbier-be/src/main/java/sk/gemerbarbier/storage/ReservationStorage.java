@@ -48,9 +48,9 @@ public class ReservationStorage implements ReservationStorageApi {
   }
 
   @Override
-  public List<ServiceStatistic> getStatistics(LocalDateTime from, LocalDateTime to) {
-    logger.debug("Getting service statistics from {} to {}.", from, to);
+  public List<ServiceStatistic> getStatistics(LocalDateTime from, LocalDateTime to, Long barberId) {
+    logger.debug("Getting service statistics from {} to {} for barberId {}.", from, to, barberId);
 
-    return repository.getStatistics(from, to);
+    return repository.getStatistics(from, to, barberId);
   }
 }

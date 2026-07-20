@@ -1462,6 +1462,23 @@ const AdminDashboard = () => {
                 </Button>
               </div>
 
+              <div
+                className="touch-pan-y select-none"
+                onTouchStart={(e) => {
+                  (e.currentTarget as any)._tsx = e.touches[0].clientX;
+                  (e.currentTarget as any)._tsy = e.touches[0].clientY;
+                }}
+                onTouchEnd={(e) => {
+                  const sx = (e.currentTarget as any)._tsx;
+                  const sy = (e.currentTarget as any)._tsy;
+                  if (sx == null) return;
+                  const dx = e.changedTouches[0].clientX - sx;
+                  const dy = e.changedTouches[0].clientY - sy;
+                  if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+                    shift(dx < 0 ? 1 : -1);
+                  }
+                }}
+              >
               {isLoadingCalendar ? (
                 <div className="flex justify-center py-10">
                   <Loader2 className="w-6 h-6 animate-spin text-accent" />
@@ -1572,7 +1589,9 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               )}
+              </div>
             </div>
+
           );
         })()}
 

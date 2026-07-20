@@ -161,6 +161,12 @@ paths:
           schema:
             type: string
             format: date
+        - name: barberId
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int64
       responses:
         200:
           description: Service statistics

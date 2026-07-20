@@ -7,5 +7,5 @@ import sk.gemerbarbier.domain.StatisticsPeriod;
 
 public interface StatisticsGetAdminApi {
 
-  List<ServiceStatistic> getStatistics(StatisticsPeriod period, LocalDate date);
+  List<ServiceStatistic> getStatistics(StatisticsPeriod period, LocalDate date, Long barberId);
 }

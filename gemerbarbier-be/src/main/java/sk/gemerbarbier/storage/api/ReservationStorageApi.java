@@ -13,5 +13,5 @@ public interface ReservationStorageApi {
 
   Reservation getById(Long reservationId);
 
-  List<ServiceStatistic> getStatistics(LocalDateTime from, LocalDateTime to);
+  List<ServiceStatistic> getStatistics(LocalDateTime from, LocalDateTime to, Long barberId);
 }

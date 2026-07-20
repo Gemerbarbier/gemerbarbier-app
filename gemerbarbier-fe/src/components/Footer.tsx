@@ -61,10 +61,11 @@ const Footer = () => {
                 </a>
               </div>
               <div className="text-muted-foreground space-y-1 text-sm">
-                <p>+421 940 194 630</p>
-                <p>+421 918 165 273</p>
-                <p>gemerbarbierra@gmail.com</p>
+                <p><a href="tel:+421940194630" className="hover:text-accent transition-colors">+421 940 194 630</a></p>
+                <p><a href="tel:+421918165273" className="hover:text-accent transition-colors">+421 918 165 273</a></p>
+                <p><a href="mailto:gemerbarbierra@gmail.com" className="hover:text-accent transition-colors">gemerbarbierra@gmail.com</a></p>
               </div>
+
             </div>
           </div>
 

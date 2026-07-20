@@ -21,8 +21,9 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
       FROM Reservation r
       WHERE r.startTime BETWEEN :from AND :to
         AND r.status = 'CREATED'
+        AND (:barberId IS NULL OR r.barber.id = :barberId)
       GROUP BY r.cutService.name
       ORDER BY COUNT(r) DESC
       """)
-  List<ServiceStatistic> getStatistics(LocalDateTime from, LocalDateTime to);
+  List<ServiceStatistic> getStatistics(LocalDateTime from, LocalDateTime to, Long barberId);
 }
