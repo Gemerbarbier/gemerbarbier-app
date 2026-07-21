@@ -9,7 +9,7 @@ import Reviews from "@/components/Reviews";
 import Reservation from "@/components/Reservation";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
-import Chatbot from "@/components/Chatbot";
+// import Chatbot from "@/components/Chatbot";
 import CookieConsent from "@/components/CookieConsent";
 
 const Index = () => {
@@ -32,7 +32,7 @@ const Index = () => {
       <SectionDivider />
       <Contact />
       <Footer />
-      <Chatbot />
+      {/* <Chatbot /> */}
       <CookieConsent />
     </div>
   );
