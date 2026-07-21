@@ -40,11 +40,13 @@ public class TimeSlotGenerationService {
 
       var day = nextMonday;
       for (int i = 0; i < 5; i++) {
-        var start = day.atTime(10, 0);
-        var end = day.atTime(16, 0);
+        var start = day.atTime(8, 0);
+        var end = day.atTime(18, 0);
 
         while (start.isBefore(end)) {
           var slotEnd = start.plusMinutes(20);
+          var activeWindow = !start.isBefore(day.atTime(10, 0)) && start.isBefore(day.atTime(16, 0));
+          var status = activeWindow ? TimeSlotStatus.ACTIVE : TimeSlotStatus.INACTIVE;
 
           if (!existingStartTimes.contains(start)) {
             try {
@@ -52,7 +54,7 @@ public class TimeSlotGenerationService {
                   .barber(barber)
                   .startTime(start)
                   .endTime(slotEnd)
-                  .status(TimeSlotStatus.ACTIVE)
+                  .status(status)
                   .build();
 
               timeSlotStorageApi.save(timeSlot);

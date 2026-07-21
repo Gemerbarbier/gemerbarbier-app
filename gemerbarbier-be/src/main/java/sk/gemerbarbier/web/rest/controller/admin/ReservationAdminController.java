@@ -8,7 +8,7 @@ import sk.gemerbarbier.api.ReservationAdminApi;
 import sk.gemerbarbier.mapper.ReservationMapper;
 import sk.gemerbarbier.model.ReservationAdminResponseDto;
 import sk.gemerbarbier.model.ReservationCreateAdminRequestDto;
-import sk.gemerbarbier.service.api.ReservationCreateApi;
+import sk.gemerbarbier.service.api.admin.ReservationCreateAdminApi;
 import sk.gemerbarbier.service.api.admin.ReservationCancelAdminApi;
 import sk.gemerbarbier.service.api.admin.ReservationGetAdminApi;
 import sk.gemerbarbier.web.rest.annotation.GemerbarbierApiController;
@@ -19,7 +19,7 @@ public class ReservationAdminController implements ReservationAdminApi {
 
   private final ReservationGetAdminApi api;
   private final ReservationCancelAdminApi cancelAdminApi;
-  private final ReservationCreateApi createApi;
+  private final ReservationCreateAdminApi createApi;
 
   @Override
   public ResponseEntity<List<ReservationAdminResponseDto>> getReservationsByDate(Long barberId,

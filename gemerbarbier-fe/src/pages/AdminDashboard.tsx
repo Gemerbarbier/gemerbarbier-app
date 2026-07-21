@@ -61,9 +61,7 @@ import {
 } from "@/lib/api/admin-api";
 import {
   getServices,
-  getAvailableSlots,
   type Service,
-  type AvailableTimeSlotResponse,
 } from "@/lib/api";
 
 // Helper: extract HH:mm from a time string (handles both "09:00" and "2026-04-07T09:00:00")
@@ -171,8 +169,6 @@ const AdminDashboard = () => {
   // Services & available slots for admin reservation form
   const [services, setServices] = useState<Service[]>([]);
   const [isLoadingServices, setIsLoadingServices] = useState(false);
-  const [adminAvailableSlots, setAdminAvailableSlots] = useState<AvailableTimeSlotResponse[]>([]);
-  const [isLoadingAvailableSlots, setIsLoadingAvailableSlots] = useState(false);
 
   const [currentBarberId, setCurrentBarberId] = useState<string>("");
   const [currentBarberName, setCurrentBarberName] = useState<string>("");
@@ -377,37 +373,6 @@ const AdminDashboard = () => {
     setIsLoadingServices(false);
   }, []);
 
-  // Fetch available slots when service is selected in admin form
-  useEffect(() => {
-    if (!currentBarberId || !newReservation.serviceId) {
-      setAdminAvailableSlots([]);
-      return;
-    }
-    const fetchSlots = async () => {
-      setIsLoadingAvailableSlots(true);
-      const response = await getAvailableSlots({
-        barberId: currentBarberId,
-        serviceId: newReservation.serviceId,
-      });
-      if (response.success && response.data) {
-        setAdminAvailableSlots(response.data);
-      } else {
-        setAdminAvailableSlots([]);
-      }
-      setIsLoadingAvailableSlots(false);
-    };
-    fetchSlots();
-  }, [currentBarberId, newReservation.serviceId]);
-
-  // Derive available dates and times for admin form
-  const adminAvailableDates = new Set(adminAvailableSlots.map(s => s.date));
-  const adminTimesForDate = (() => {
-    if (!newReservation.date) return [];
-    const dateParts = newReservation.date.split('/');
-    if (dateParts.length !== 3) return [];
-    const isoDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
-    return adminAvailableSlots.find(s => s.date === isoDate)?.timeList || [];
-  })();
 
   const handleLogout = () => {
     sessionStorage.clear();
@@ -790,7 +755,7 @@ const AdminDashboard = () => {
                 }
               }}>
                 <DialogTrigger asChild>
-                  <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/80 gap-1 sm:gap-2 text-xs sm:text-sm w-full sm:w-auto" disabled={selectedDate < new Date().toISOString().split("T")[0]}>
+                  <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/80 gap-1 sm:gap-2 text-xs sm:text-sm w-full sm:w-auto">
                     <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                     Nová rezervácia
                   </Button>
@@ -836,7 +801,7 @@ const AdminDashboard = () => {
                       <Label>Služba *</Label>
                       <Select
                         value={newReservation.serviceId}
-                        onValueChange={(value) => setNewReservation({ ...newReservation, serviceId: value, date: "", time: "" })}
+                        onValueChange={(value) => setNewReservation({ ...newReservation, serviceId: value })}
                         disabled={isLoadingServices}
                       >
                         <SelectTrigger>
@@ -860,7 +825,6 @@ const AdminDashboard = () => {
                             type="text"
                             placeholder="dd/mm/yyyy"
                             value={newReservation.date}
-                            disabled={!newReservation.serviceId}
                             onChange={(e) => {
                               let value = e.target.value.replace(/[^\d/]/g, '');
                               if (value.length === 2 && !value.includes('/')) {
@@ -869,14 +833,14 @@ const AdminDashboard = () => {
                                 value = value + '/';
                               }
                               if (value.length <= 10) {
-                                setNewReservation({ ...newReservation, date: value, time: "" });
+                                setNewReservation({ ...newReservation, date: value });
                               }
                             }}
                             className="flex-1"
                           />
                           <Popover>
                             <PopoverTrigger asChild>
-                              <Button variant="outline" size="icon" disabled={!newReservation.serviceId}>
+                              <Button variant="outline" size="icon">
                                 <CalendarIcon className="w-4 h-4" />
                               </Button>
                             </PopoverTrigger>
@@ -895,15 +859,10 @@ const AdminDashboard = () => {
                                     const day = String(date.getDate()).padStart(2, '0');
                                     const month = String(date.getMonth() + 1).padStart(2, '0');
                                     const year = date.getFullYear();
-                                    setNewReservation({ ...newReservation, date: `${day}/${month}/${year}`, time: "" });
+                                    setNewReservation({ ...newReservation, date: `${day}/${month}/${year}` });
                                   }
                                 }}
-                                disabled={(date) => {
-                                  const y = date.getFullYear();
-                                  const m = String(date.getMonth() + 1).padStart(2, '0');
-                                  const d = String(date.getDate()).padStart(2, '0');
-                                  return date < new Date(new Date().toDateString()) || !adminAvailableDates.has(`${y}-${m}-${d}`);
-                                }}
+                                disabled={() => false}
                                 className={cn("p-3 pointer-events-auto")}
                               />
                             </PopoverContent>
@@ -912,27 +871,11 @@ const AdminDashboard = () => {
                       </div>
                       <div>
                         <Label>Čas *</Label>
-                        <Select
+                        <Input
+                          type="time"
                           value={newReservation.time}
-                          onValueChange={(value) => setNewReservation({ ...newReservation, time: value })}
-                          disabled={!newReservation.date || adminTimesForDate.length === 0}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder={
-                              isLoadingAvailableSlots ? "Načítavam..." :
-                              !newReservation.date ? "Najprv vyberte dátum" :
-                              adminTimesForDate.length === 0 ? "Žiadne voľné časy" :
-                              "Vyberte čas"
-                            } />
-                          </SelectTrigger>
-                          <SelectContent className="bg-card max-h-48">
-                            {adminTimesForDate.map((time) => (
-                              <SelectItem key={time} value={time}>
-                                {time}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          onChange={(e) => setNewReservation({ ...newReservation, time: e.target.value })}
+                        />
                       </div>
                     </div>
                     <div>
