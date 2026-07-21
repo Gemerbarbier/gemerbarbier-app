@@ -991,7 +991,7 @@ const AdminDashboard = () => {
                                 <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1.5">
                                   {reservation.customerPhone && (
                                     <a
-                                      href={`tel:${reservation.customerPhone.replace(/\s+/g, "")}`}
+                                      href={`tel:${reservation.customerPhone.startsWith("+") ? reservation.customerPhone.replace(/\s+/g, "") : `+${reservation.customerPhone.replace(/\s+/g, "")}`}`}
                                       className="flex items-center gap-1 text-[11px] sm:text-xs text-muted-foreground hover:text-accent transition-colors"
                                     >
                                       <Phone className="w-3 h-3" />
