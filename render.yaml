@@ -1,7 +1,7 @@
 services:
   - type: web
     name: gemerbarbier-fe
-    runtime: static
+    env: static
     buildCommand: cd gemerbarbier-fe && npm install && npm run build
     staticPublishPath: gemerbarbier-fe/dist
     headers:
@@ -11,3 +11,9 @@ services:
       - path: /index.html
         name: Pragma
         value: no-cache
+      - path: /index.html
+        name: Expires
+        value: "0"
+      - path: /version.json
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate

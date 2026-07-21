@@ -13,25 +13,22 @@
     <meta property="og:title" content="Gemerbarbier - Prémiové Holičstvo & Služby Starostlivosti" />
     <meta property="og:description" content="Zažite prémiovú starostlivosť v Gemerbarbier. Skúsení holiči, klasické strihy, tradičné holenie a moderný štýl." />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@Lovable" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
   </head>
 
   <body>
     <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function (regs) {
-          regs.forEach(function (r) { r.unregister(); });
-        });
-      }
-      if ('caches' in window) {
-        caches.keys().then(function (names) {
-          names.forEach(function (n) { caches.delete(n); });
-        });
-      }
+      fetch('/version.json?v=' + Date.now(), { cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          var stored = localStorage.getItem('_appVersion');
+          if (stored && stored !== data.version) {
+            localStorage.setItem('_appVersion', data.version);
+            window.location.reload();
+          } else {
+            localStorage.setItem('_appVersion', data.version);
+          }
+        })
+        .catch(function () {});
     </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>

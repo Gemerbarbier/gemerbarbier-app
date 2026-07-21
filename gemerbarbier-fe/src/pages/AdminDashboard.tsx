@@ -72,6 +72,13 @@ const formatTime = (t: string) => {
   return t.substring(0, 5);
 };
 
+const ADMIN_SLOT_TIMES: string[] = [];
+for (let totalMin = 8 * 60; totalMin < 18 * 60; totalMin += 20) {
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  ADMIN_SLOT_TIMES.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+}
+
 // Service color and icon mapping
 const SERVICE_CONFIG_LIST: Array<{ match: string; bg: string; border: string; text: string; icon: React.ElementType }> = [
   { match: "exclusive strih & úprava brady", bg: "bg-violet-500/20", border: "border-violet-500/40", text: "text-violet-400", icon: Sparkles },
@@ -373,6 +380,23 @@ const AdminDashboard = () => {
     setIsLoadingServices(false);
   }, []);
 
+  const availableAdminTimes = (() => {
+    const parts = newReservation.date.split('/');
+    if (parts.length !== 3 || parts[2].length !== 4) return ADMIN_SLOT_TIMES;
+    const selectedDay = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (selectedDay < today) return [];
+    if (selectedDay.getTime() === today.getTime()) {
+      const now = new Date();
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+      return ADMIN_SLOT_TIMES.filter(t => {
+        const [h, m] = t.split(':').map(Number);
+        return h * 60 + m > nowMin;
+      });
+    }
+    return ADMIN_SLOT_TIMES;
+  })();
 
   const handleLogout = () => {
     sessionStorage.clear();
@@ -755,7 +779,7 @@ const AdminDashboard = () => {
                 }
               }}>
                 <DialogTrigger asChild>
-                  <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/80 gap-1 sm:gap-2 text-xs sm:text-sm w-full sm:w-auto">
+                  <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/80 gap-1 sm:gap-2 text-xs sm:text-sm w-full sm:w-auto" disabled={selectedDate < localDateStr(new Date())}>
                     <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                     Nová rezervácia
                   </Button>
@@ -833,7 +857,7 @@ const AdminDashboard = () => {
                                 value = value + '/';
                               }
                               if (value.length <= 10) {
-                                setNewReservation({ ...newReservation, date: value });
+                                setNewReservation({ ...newReservation, date: value, time: "" });
                               }
                             }}
                             className="flex-1"
@@ -859,7 +883,7 @@ const AdminDashboard = () => {
                                     const day = String(date.getDate()).padStart(2, '0');
                                     const month = String(date.getMonth() + 1).padStart(2, '0');
                                     const year = date.getFullYear();
-                                    setNewReservation({ ...newReservation, date: `${day}/${month}/${year}` });
+                                    setNewReservation({ ...newReservation, date: `${day}/${month}/${year}`, time: "" });
                                   }
                                 }}
                                 disabled={() => false}
@@ -871,11 +895,20 @@ const AdminDashboard = () => {
                       </div>
                       <div>
                         <Label>Čas *</Label>
-                        <Input
-                          type="time"
+                        <Select
                           value={newReservation.time}
-                          onChange={(e) => setNewReservation({ ...newReservation, time: e.target.value })}
-                        />
+                          onValueChange={(value) => setNewReservation({ ...newReservation, time: value })}
+                          disabled={availableAdminTimes.length === 0}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={availableAdminTimes.length === 0 ? "Žiadne dostupné časy" : "Vyberte čas"} />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card max-h-60">
+                            {availableAdminTimes.map((time) => (
+                              <SelectItem key={time} value={time}>{time}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                     <div>
