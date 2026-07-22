@@ -26,7 +26,7 @@ public class ReservationStorage implements ReservationStorageApi {
     try {
       repository.save(reservation);
     } catch (DataIntegrityViolationException e) {
-      throw new IllegalStateException("Slot was just booked by someone else");
+      throw new IllegalStateException("Tento dátum rezervácie je už obsadený.");
     }
   }
 

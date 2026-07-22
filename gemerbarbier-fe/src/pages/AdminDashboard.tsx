@@ -887,7 +887,11 @@ const AdminDashboard = () => {
                                     setNewReservation({ ...newReservation, date: `${day}/${month}/${year}`, time: "" });
                                   }
                                 }}
-                                disabled={() => false}
+                                disabled={(date) => {
+                                  const today = new Date();
+                                  today.setHours(0, 0, 0, 0);
+                                  return date < today;
+                                }}
                                 className={cn("p-3 pointer-events-auto")}
                               />
                             </PopoverContent>

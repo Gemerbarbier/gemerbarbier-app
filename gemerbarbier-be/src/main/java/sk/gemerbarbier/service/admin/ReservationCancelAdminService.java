@@ -2,6 +2,7 @@ package sk.gemerbarbier.service.admin;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import sk.gemerbarbier.entity.ReservationStatus;
 import sk.gemerbarbier.entity.TimeSlotStatus;
 import sk.gemerbarbier.service.api.admin.ReservationCancelAdminApi;
@@ -16,6 +17,7 @@ public class ReservationCancelAdminService implements ReservationCancelAdminApi 
   private final TimeSlotStorageApi timeSlotStorageApi;
 
   @Override
+  @Transactional
   public void cancelReservation(Long reservationId) {
     var reservation = reservationStorage.getById(reservationId);
 
@@ -26,13 +28,9 @@ public class ReservationCancelAdminService implements ReservationCancelAdminApi 
     reservation.setStatus(ReservationStatus.CANCELLED);
 
     var slots = timeSlotStorageApi.getTimeSlots(reservation.getBarber().getId(),
-        reservation.getStartTime(), reservation.getEndTime(), TimeSlotStatus.RESERVED);
+        reservation.getStartTime(), reservation.getEndTime().minusSeconds(1), TimeSlotStatus.RESERVED);
 
-    slots.forEach(slot -> {
-      if (slot.getStatus() == TimeSlotStatus.RESERVED) {
-        slot.setStatus(TimeSlotStatus.ACTIVE);
-      }
-    });
+    slots.forEach(slot -> slot.setStatus(TimeSlotStatus.ACTIVE));
 
     timeSlotStorageApi.saveAll(slots);
   }
