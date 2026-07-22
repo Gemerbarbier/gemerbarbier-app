@@ -45,7 +45,8 @@ public class TimeSlotGenerationService {
 
         while (start.isBefore(end)) {
           var slotEnd = start.plusMinutes(20);
-          var activeWindow = !start.isBefore(day.atTime(10, 0)) && start.isBefore(day.atTime(16, 0));
+          var lunchBreak = !start.isBefore(day.atTime(13, 0)) && start.isBefore(day.atTime(14, 0));
+          var activeWindow = !start.isBefore(day.atTime(10, 0)) && start.isBefore(day.atTime(16, 0)) && !lunchBreak;
           var status = activeWindow ? TimeSlotStatus.ACTIVE : TimeSlotStatus.INACTIVE;
 
           if (!existingStartTimes.contains(start)) {
