@@ -177,6 +177,8 @@ const AdminDashboard = () => {
   // Services & available slots for admin reservation form
   const [services, setServices] = useState<Service[]>([]);
   const [isLoadingServices, setIsLoadingServices] = useState(false);
+  const [adminFormSlots, setAdminFormSlots] = useState<TimeSlotAdmin[]>([]);
+  const [isLoadingAdminFormSlots, setIsLoadingAdminFormSlots] = useState(false);
 
   const [currentBarberId, setCurrentBarberId] = useState<string>("");
   const [currentBarberName, setCurrentBarberName] = useState<string>("");
@@ -371,6 +373,32 @@ const AdminDashboard = () => {
     }
   }, [reservations, scrollToReservationId, activeTab]);
 
+  // Fetch time slots for admin reservation form when date changes
+  useEffect(() => {
+    if (!isAddReservationOpen || !currentBarberId) {
+      setAdminFormSlots([]);
+      return;
+    }
+    const parts = newReservation.date.split('/');
+    if (parts.length !== 3 || parts[0].length !== 2 || parts[1].length !== 2 || parts[2].length !== 4) {
+      setAdminFormSlots([]);
+      return;
+    }
+    const isoDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+    let cancelled = false;
+    const fetchSlots = async () => {
+      setIsLoadingAdminFormSlots(true);
+      setNewReservation(prev => ({ ...prev, time: "" }));
+      const response = await getAdminTimeSlots(currentBarberId, isoDate);
+      if (!cancelled) {
+        setAdminFormSlots(response.success && response.data ? response.data : []);
+        setIsLoadingAdminFormSlots(false);
+      }
+    };
+    fetchSlots();
+    return () => { cancelled = true; };
+  }, [newReservation.date, isAddReservationOpen, currentBarberId]);
+
   // Fetch services for admin reservation form
   const fetchServicesForForm = useCallback(async () => {
     setIsLoadingServices(true);
@@ -383,20 +411,25 @@ const AdminDashboard = () => {
 
   const availableAdminTimes = (() => {
     const parts = newReservation.date.split('/');
-    if (parts.length !== 3 || parts[2].length !== 4) return ADMIN_SLOT_TIMES;
+    if (parts.length !== 3 || parts[2].length !== 4) return [];
     const selectedDay = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     if (selectedDay < today) return [];
-    if (selectedDay.getTime() === today.getTime()) {
-      const now = new Date();
-      const nowMin = now.getHours() * 60 + now.getMinutes();
-      return ADMIN_SLOT_TIMES.filter(t => {
-        const [h, m] = t.split(':').map(Number);
-        return h * 60 + m > nowMin;
-      });
+    const isToday = selectedDay.getTime() === today.getTime();
+    const nowMin = isToday ? new Date().getHours() * 60 + new Date().getMinutes() : -1;
+    const afterNow = (time: string) => {
+      if (!isToday) return true;
+      const [h, m] = time.split(':').map(Number);
+      return h * 60 + m > nowMin;
+    };
+    if (adminFormSlots.length > 0) {
+      return adminFormSlots
+        .filter(slot => slot.status !== 'RESERVED')
+        .map(slot => slot.startTime)
+        .filter(afterNow);
     }
-    return ADMIN_SLOT_TIMES;
+    return ADMIN_SLOT_TIMES.filter(afterNow);
   })();
 
   const handleLogout = () => {
@@ -903,10 +936,14 @@ const AdminDashboard = () => {
                         <Select
                           value={newReservation.time}
                           onValueChange={(value) => setNewReservation({ ...newReservation, time: value })}
-                          disabled={availableAdminTimes.length === 0}
+                          disabled={isLoadingAdminFormSlots || availableAdminTimes.length === 0}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder={availableAdminTimes.length === 0 ? "Žiadne dostupné časy" : "Vyberte čas"} />
+                            <SelectValue placeholder={
+                              isLoadingAdminFormSlots ? "Načítavam..." :
+                              availableAdminTimes.length === 0 ? "Žiadne dostupné časy" :
+                              "Vyberte čas"
+                            } />
                           </SelectTrigger>
                           <SelectContent className="bg-card max-h-60">
                             {availableAdminTimes.map((time) => (
