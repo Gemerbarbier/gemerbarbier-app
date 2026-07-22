@@ -2,6 +2,7 @@ package sk.gemerbarbier.service;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import sk.gemerbarbier.domain.request.ReservationRequest;
 import sk.gemerbarbier.entity.ReservationStatus;
 import sk.gemerbarbier.entity.TimeSlotStatus;
@@ -22,6 +23,7 @@ public class ReservationCreateService implements ReservationCreateApi {
   private final TimeSlotStorageApi timeSlotStorage;
 
   @Override
+  @Transactional
   public void createReservation(ReservationRequest request) {
     var service = (cutServiceStorage.getCutServiceById(request.serviceId()));
 
