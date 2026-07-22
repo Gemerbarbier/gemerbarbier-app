@@ -3,6 +3,7 @@ package sk.gemerbarbier.service;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashSet;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -26,7 +27,7 @@ public class TimeSlotGenerationService {
     logger.debug("Generating time slots...");
 
     var barberList = barberStorageApi.getBarberList();
-    var nextMonday = LocalDate.now().plusWeeks(2).with(DayOfWeek.MONDAY);
+    var nextMonday = LocalDate.now(ZoneId.of("Europe/Bratislava")).plusWeeks(2).with(DayOfWeek.MONDAY);
     var weekEnd = nextMonday.plusDays(5);
 
     for (var barber : barberList) {

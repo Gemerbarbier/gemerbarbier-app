@@ -99,7 +99,8 @@ const AdminDashboard = () => {
   const [timeSlots, setTimeSlots] = useState<TimeSlotAdmin[]>([]);
   const [isLoadingReservations, setIsLoadingReservations] = useState(false);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
-  const initialDate = searchParams.get("date") || new Date().toISOString().split("T")[0];
+  const _now = new Date();
+  const initialDate = searchParams.get("date") || `${_now.getFullYear()}-${String(_now.getMonth() + 1).padStart(2, "0")}-${String(_now.getDate()).padStart(2, "0")}`;
   const [selectedDate, setSelectedDate] = useState<string>(initialDate);
   const [weekOffset, setWeekOffset] = useState(() => {
     const today = new Date();
@@ -513,7 +514,7 @@ const AdminDashboard = () => {
     for (let i = 0; i < 7; i++) {
       const date = new Date(startDate);
       date.setDate(startDate.getDate() + i);
-      dates.push(date.toISOString().split("T")[0]);
+      dates.push(`${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`);
     }
     return dates;
   };
@@ -527,7 +528,7 @@ const AdminDashboard = () => {
   const goToNextWeek = () => setWeekOffset((prev) => prev + 1);
   const goToCurrentWeek = () => {
     setWeekOffset(0);
-    setSelectedDate(new Date().toISOString().split("T")[0]);
+    setSelectedDate(localDateStr(new Date()));
   };
 
   const localDateStr = (d: Date): string => {
@@ -557,7 +558,7 @@ const AdminDashboard = () => {
 
   const handleTabChange = (tab: TabKey) => {
     setActiveTab(tab);
-    const today = new Date().toISOString().split("T")[0];
+    const today = localDateStr(new Date());
     setSelectedDate(today);
     setWeekOffset(0);
   };
@@ -721,7 +722,7 @@ const AdminDashboard = () => {
           >
             {weekDates.map((date, index) => {
               const isSelected = date === selectedDate;
-              const isToday = date === new Date().toISOString().split("T")[0];
+              const isToday = date === localDateStr(new Date());
 
               return (
                 <button
@@ -1058,7 +1059,7 @@ const AdminDashboard = () => {
               <Button
                 size="sm"
                 className="bg-red-400/80 hover:bg-red-400 text-white gap-1 sm:gap-2 text-xs sm:text-sm w-full sm:w-auto"
-                disabled={selectedDate < new Date().toISOString().split("T")[0]}
+                disabled={selectedDate < localDateStr(new Date())}
                 onClick={async () => {
                   if (!currentBarberId) return;
                   if (!confirm("Naozaj chcete deaktivovať všetky časové sloty na tento deň?")) return;
