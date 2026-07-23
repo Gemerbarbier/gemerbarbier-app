@@ -177,7 +177,7 @@ const AdminDashboard = () => {
   // Services & available slots for admin reservation form
   const [services, setServices] = useState<Service[]>([]);
   const [isLoadingServices, setIsLoadingServices] = useState(false);
-  const [adminFormSlots, setAdminFormSlots] = useState<TimeSlotAdmin[]>([]);
+  const [adminFormReservations, setAdminFormReservations] = useState<ReservationAdmin[]>([]);
   const [isLoadingAdminFormSlots, setIsLoadingAdminFormSlots] = useState(false);
 
   const [currentBarberId, setCurrentBarberId] = useState<string>("");
@@ -373,29 +373,29 @@ const AdminDashboard = () => {
     }
   }, [reservations, scrollToReservationId, activeTab]);
 
-  // Fetch time slots for admin reservation form when date changes
+  // Fetch reservations for admin form when date changes — used to filter out occupied times
   useEffect(() => {
     if (!isAddReservationOpen || !currentBarberId) {
-      setAdminFormSlots([]);
+      setAdminFormReservations([]);
       return;
     }
     const parts = newReservation.date.split('/');
     if (parts.length !== 3 || parts[0].length !== 2 || parts[1].length !== 2 || parts[2].length !== 4) {
-      setAdminFormSlots([]);
+      setAdminFormReservations([]);
       return;
     }
     const isoDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
     let cancelled = false;
-    const fetchSlots = async () => {
+    const fetch = async () => {
       setIsLoadingAdminFormSlots(true);
       setNewReservation(prev => ({ ...prev, time: "" }));
-      const response = await getAdminTimeSlots(currentBarberId, isoDate);
+      const response = await getAdminReservations(currentBarberId, isoDate);
       if (!cancelled) {
-        setAdminFormSlots(response.success && response.data ? response.data : []);
+        setAdminFormReservations(response.success && response.data ? response.data : []);
         setIsLoadingAdminFormSlots(false);
       }
     };
-    fetchSlots();
+    fetch();
     return () => { cancelled = true; };
   }, [newReservation.date, isAddReservationOpen, currentBarberId]);
 
@@ -418,18 +418,23 @@ const AdminDashboard = () => {
     if (selectedDay < today) return [];
     const isToday = selectedDay.getTime() === today.getTime();
     const nowMin = isToday ? new Date().getHours() * 60 + new Date().getMinutes() : -1;
-    const afterNow = (time: string) => {
-      if (!isToday) return true;
-      const [h, m] = time.split(':').map(Number);
-      return h * 60 + m > nowMin;
+
+    const toMin = (timeStr: string) => {
+      const t = timeStr.includes('T') ? timeStr.split('T')[1] : timeStr;
+      const [h, m] = t.substring(0, 5).split(':').map(Number);
+      return h * 60 + m;
     };
-    if (adminFormSlots.length > 0) {
-      return adminFormSlots
-        .filter(slot => slot.status !== 'RESERVED')
-        .map(slot => slot.startTime)
-        .filter(afterNow);
-    }
-    return ADMIN_SLOT_TIMES.filter(afterNow);
+
+    const occupiedRanges = adminFormReservations
+      .filter(r => r.status !== 'CANCELLED')
+      .map(r => ({ start: toMin(r.startTime), end: toMin(r.endTime) }));
+
+    return ADMIN_SLOT_TIMES.filter(time => {
+      const [h, m] = time.split(':').map(Number);
+      const slotMin = h * 60 + m;
+      if (isToday && slotMin <= nowMin) return false;
+      return !occupiedRanges.some(range => slotMin >= range.start && slotMin < range.end);
+    });
   })();
 
   const handleLogout = () => {
