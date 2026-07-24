@@ -26,49 +26,47 @@ public class TimeSlotGenerationService {
   public void generateWeeklySlots() {
     logger.debug("Generating time slots...");
 
-    var barberList = barberStorageApi.getBarberList();
+    var barber = barberStorageApi.getBarberById(1L);
     var nextMonday = LocalDate.now(ZoneId.of("Europe/Bratislava")).plusWeeks(2).with(DayOfWeek.MONDAY);
     var weekEnd = nextMonday.plusDays(5);
 
-    for (var barber : barberList) {
-      var existingSlots = timeSlotStorageApi.getTimeSlots(barber.getId(), nextMonday.atStartOfDay(),
-          weekEnd.atTime(23, 59));
+    var existingSlots = timeSlotStorageApi.getTimeSlots(barber.getId(), nextMonday.atStartOfDay(),
+        weekEnd.atTime(23, 59));
 
-      var existingStartTimes = new HashSet<LocalDateTime>();
-      for (var slot : existingSlots) {
-        existingStartTimes.add(slot.getStartTime());
-      }
+    var existingStartTimes = new HashSet<LocalDateTime>();
+    for (var slot : existingSlots) {
+      existingStartTimes.add(slot.getStartTime());
+    }
 
-      var day = nextMonday;
-      for (int i = 0; i < 5; i++) {
-        var start = day.atTime(8, 0);
-        var end = day.atTime(18, 0);
+    var day = nextMonday;
+    for (int i = 0; i < 5; i++) {
+      var start = day.atTime(8, 0);
+      var end = day.atTime(18, 0);
 
-        while (start.isBefore(end)) {
-          var slotEnd = start.plusMinutes(20);
-          var lunchBreak = !start.isBefore(day.atTime(13, 0)) && start.isBefore(day.atTime(14, 0));
-          var activeWindow = !start.isBefore(day.atTime(10, 0)) && start.isBefore(day.atTime(16, 0)) && !lunchBreak;
-          var status = activeWindow ? TimeSlotStatus.ACTIVE : TimeSlotStatus.INACTIVE;
+      while (start.isBefore(end)) {
+        var slotEnd = start.plusMinutes(20);
+        var lunchBreak = !start.isBefore(day.atTime(13, 0)) && start.isBefore(day.atTime(14, 0));
+        var activeWindow = !start.isBefore(day.atTime(10, 0)) && start.isBefore(day.atTime(16, 0)) && !lunchBreak;
+        var status = activeWindow ? TimeSlotStatus.ACTIVE : TimeSlotStatus.INACTIVE;
 
-          if (!existingStartTimes.contains(start)) {
-            try {
-              var timeSlot = TimeSlot.builder()
-                  .barber(barber)
-                  .startTime(start)
-                  .endTime(slotEnd)
-                  .status(status)
-                  .build();
+        if (!existingStartTimes.contains(start)) {
+          try {
+            var timeSlot = TimeSlot.builder()
+                .barber(barber)
+                .startTime(start)
+                .endTime(slotEnd)
+                .status(status)
+                .build();
 
-              timeSlotStorageApi.save(timeSlot);
-              existingStartTimes.add(start);
-            } catch (Exception e) {
-              logger.warn("Duplicate prevented for: {}.", start);
-            }
+            timeSlotStorageApi.save(timeSlot);
+            existingStartTimes.add(start);
+          } catch (Exception e) {
+            logger.warn("Duplicate prevented for: {}.", start);
           }
-          start = start.plusMinutes(20);
         }
-        day = day.plusDays(1);
+        start = start.plusMinutes(20);
       }
+      day = day.plusDays(1);
     }
 
     logger.debug("Time slots generated.");
