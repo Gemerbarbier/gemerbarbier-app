@@ -40,6 +40,13 @@ export interface ReservationCreateAdminRequest {
   note?: string;
 }
 
+export interface VacationCreateAdminRequest {
+  barberId: number;
+  date: string; // YYYY-MM-DD
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+}
+
 export type StatisticsPeriod = 'WEEK' | 'MONTH' | 'YEAR';
 
 export interface ServiceStatisticsResponse {
@@ -115,6 +122,19 @@ export async function deactivateAllTimeSlots(
 }
 
 /**
+ * Create a vacation block as admin
+ * POST /admin/vacations
+ */
+export async function createAdminVacation(
+  data: VacationCreateAdminRequest
+): Promise<ApiResponse<void>> {
+  return httpClient<void>('/admin/vacations', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
  * Cancel a reservation
  * PATCH /admin/reservations/{reservationId}/cancel
  */
@@ -148,6 +168,7 @@ export const adminApi = {
   updateTimeSlotStatus,
   getReservations: getAdminReservations,
   createReservation: createAdminReservation,
+  createVacation: createAdminVacation,
   cancelReservation: cancelAdminReservation,
   deactivateAllTimeSlots,
   getServiceStatistics,

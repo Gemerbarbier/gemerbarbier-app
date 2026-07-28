@@ -176,6 +176,20 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ServiceStatisticsResponse'
+  /admin/vacations:
+    post:
+      tags: [ VacationAdmin ]
+      summary: Create vacation block for a barber
+      operationId: createVacation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VacationCreateAdminRequest'
+      responses:
+        201:
+          description: Created
   /admin/reservations/{reservationId}/cancel:
     patch:
       tags: [ ReservationAdmin ]
@@ -376,6 +390,22 @@ components:
           format: date-time
         note:
           type: string
+    VacationCreateAdminRequest:
+      type: object
+      required: [ barberId, date, startTime, endTime ]
+      properties:
+        barberId:
+          type: integer
+          format: int64
+        date:
+          type: string
+          format: date
+        startTime:
+          type: string
+          example: "08:00"
+        endTime:
+          type: string
+          example: "18:00"
     ReservationResponse:
       type: object
       properties:

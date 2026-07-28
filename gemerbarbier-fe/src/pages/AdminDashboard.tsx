@@ -51,6 +51,7 @@ import {
   getAdminTimeSlots,
   getAdminReservations,
   createAdminReservation,
+  createAdminVacation,
   cancelAdminReservation,
   updateTimeSlotStatus,
   deactivateAllTimeSlots,
@@ -167,6 +168,8 @@ const AdminDashboard = () => {
   const [newReservation, setNewReservation] = useState({
     date: "",
     time: "",
+    timeFrom: "08:00",
+    timeTo: "18:00",
     serviceId: "",
     note: "",
     customerName: "",
@@ -379,7 +382,7 @@ const AdminDashboard = () => {
       setAdminFormReservations([]);
       return;
     }
-    const parts = newReservation.date.split('/');
+    const parts = newReservation.date.split('.');
     if (parts.length !== 3 || parts[0].length !== 2 || parts[1].length !== 2 || parts[2].length !== 4) {
       setAdminFormReservations([]);
       return;
@@ -410,7 +413,7 @@ const AdminDashboard = () => {
   }, []);
 
   const availableAdminTimes = (() => {
-    const parts = newReservation.date.split('/');
+    const parts = newReservation.date.split('.');
     if (parts.length !== 3 || parts[2].length !== 4) return [];
     const selectedDay = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
     const today = new Date();
@@ -464,6 +467,46 @@ const AdminDashboard = () => {
   };
 
   const handleAddReservation = async () => {
+    const resetForm = () => setNewReservation({ date: "", time: "", timeFrom: "08:00", timeTo: "18:00", serviceId: "", note: "", customerName: "", customerEmail: "", customerPhone: "" });
+
+    if (newReservation.serviceId === "DOVOLENKA") {
+      if (!newReservation.date) {
+        toast({
+          title: "Chýbajúce údaje",
+          description: "Vyplňte dátum.",
+          variant: "destructive",
+        });
+        return;
+      }
+      const dateParts = newReservation.date.split('.');
+      const isoDate = dateParts.length === 3
+        ? `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`
+        : newReservation.date;
+      const response = await createAdminVacation({
+        barberId: parseInt(currentBarberId),
+        date: isoDate,
+        startTime: newReservation.timeFrom,
+        endTime: newReservation.timeTo,
+      });
+      if (response.success) {
+        resetForm();
+        setIsAddReservationOpen(false);
+        toast({
+          title: "Dovolenka zaznamenaná",
+          description: "Dovolenka bola úspešne pridaná.",
+        });
+        fetchReservations();
+        fetchTimeSlots();
+      } else {
+        toast({
+          title: "Chyba",
+          description: response.error?.message || "Nepodarilo sa zaznamenať dovolenku.",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+
     if (!newReservation.customerName || !newReservation.serviceId || !newReservation.date || !newReservation.time) {
       toast({
         title: "Chýbajúce údaje",
@@ -473,8 +516,8 @@ const AdminDashboard = () => {
       return;
     }
 
-    // Convert dd/mm/yyyy to ISO date
-    const dateParts = newReservation.date.split('/');
+    // Convert DD.MM.yyyy to ISO date
+    const dateParts = newReservation.date.split('.');
     const isoDate = dateParts.length === 3
       ? `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`
       : newReservation.date;
@@ -493,7 +536,7 @@ const AdminDashboard = () => {
     });
 
     if (response.success) {
-      setNewReservation({ date: "", time: "", serviceId: "", note: "", customerName: "", customerEmail: "", customerPhone: "" });
+      resetForm();
       setIsAddReservationOpen(false);
       toast({
         title: "Rezervácia vytvorená",
@@ -813,7 +856,7 @@ const AdminDashboard = () => {
                 if (open) {
                   fetchServicesForForm();
                   const dateParts = selectedDate.split('-');
-                  const formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+                  const formattedDate = `${dateParts[2]}.${dateParts[1]}.${dateParts[0]}`;
                   setNewReservation(prev => ({ ...prev, date: formattedDate }));
                 }
               }}>
@@ -864,13 +907,14 @@ const AdminDashboard = () => {
                       <Label>Služba *</Label>
                       <Select
                         value={newReservation.serviceId}
-                        onValueChange={(value) => setNewReservation({ ...newReservation, serviceId: value })}
+                        onValueChange={(value) => setNewReservation({ ...newReservation, serviceId: value, time: "", timeFrom: "08:00", timeTo: "18:00" })}
                         disabled={isLoadingServices}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder={isLoadingServices ? "Načítavam..." : "Vyberte službu"} />
                         </SelectTrigger>
                         <SelectContent className="bg-card">
+                          <SelectItem value="DOVOLENKA">Dovolenka</SelectItem>
                           {services.map((service) => (
                             <SelectItem key={service.id} value={service.id}>
                               {service.name}
@@ -886,14 +930,15 @@ const AdminDashboard = () => {
                         <div className="flex gap-2">
                           <Input
                             type="text"
-                            placeholder="dd/mm/yyyy"
+                            placeholder="DD.MM.yyyy"
                             value={newReservation.date}
+                            disabled={!newReservation.serviceId}
                             onChange={(e) => {
-                              let value = e.target.value.replace(/[^\d/]/g, '');
-                              if (value.length === 2 && !value.includes('/')) {
-                                value = value + '/';
-                              } else if (value.length === 5 && value.split('/').length === 2) {
-                                value = value + '/';
+                              let value = e.target.value.replace(/[^\d.]/g, '');
+                              if (value.length === 2 && !value.includes('.')) {
+                                value = value + '.';
+                              } else if (value.length === 5 && value.split('.').length === 2) {
+                                value = value + '.';
                               }
                               if (value.length <= 10) {
                                 setNewReservation({ ...newReservation, date: value, time: "" });
@@ -903,7 +948,7 @@ const AdminDashboard = () => {
                           />
                           <Popover>
                             <PopoverTrigger asChild>
-                              <Button variant="outline" size="icon">
+                              <Button variant="outline" size="icon" disabled={!newReservation.serviceId}>
                                 <CalendarIcon className="w-4 h-4" />
                               </Button>
                             </PopoverTrigger>
@@ -911,7 +956,7 @@ const AdminDashboard = () => {
                               <CalendarComponent
                                 mode="single"
                                 selected={(() => {
-                                  const parts = newReservation.date.split('/');
+                                  const parts = newReservation.date.split('.');
                                   if (parts.length === 3 && parts[0].length === 2 && parts[1].length === 2 && parts[2].length === 4) {
                                     return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
                                   }
@@ -922,7 +967,7 @@ const AdminDashboard = () => {
                                     const day = String(date.getDate()).padStart(2, '0');
                                     const month = String(date.getMonth() + 1).padStart(2, '0');
                                     const year = date.getFullYear();
-                                    setNewReservation({ ...newReservation, date: `${day}/${month}/${year}`, time: "" });
+                                    setNewReservation({ ...newReservation, date: `${day}.${month}.${year}`, time: "" });
                                   }
                                 }}
                                 disabled={(date) => {
@@ -936,27 +981,49 @@ const AdminDashboard = () => {
                           </Popover>
                         </div>
                       </div>
-                      <div>
-                        <Label>Čas *</Label>
-                        <Select
-                          value={newReservation.time}
-                          onValueChange={(value) => setNewReservation({ ...newReservation, time: value })}
-                          disabled={isLoadingAdminFormSlots || availableAdminTimes.length === 0}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder={
-                              isLoadingAdminFormSlots ? "Načítavam..." :
-                              availableAdminTimes.length === 0 ? "Žiadne dostupné časy" :
-                              "Vyberte čas"
-                            } />
-                          </SelectTrigger>
-                          <SelectContent className="bg-card max-h-60">
-                            {availableAdminTimes.map((time) => (
-                              <SelectItem key={time} value={time}>{time}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      {newReservation.serviceId === "DOVOLENKA" ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <Label>Čas od *</Label>
+                            <Input
+                              type="time"
+                              value={newReservation.timeFrom}
+                              onChange={(e) => setNewReservation({ ...newReservation, timeFrom: e.target.value })}
+                            />
+                          </div>
+                          <div>
+                            <Label>Čas do *</Label>
+                            <Input
+                              type="time"
+                              value={newReservation.timeTo}
+                              onChange={(e) => setNewReservation({ ...newReservation, timeTo: e.target.value })}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <Label>Čas *</Label>
+                          <Select
+                            value={newReservation.time}
+                            onValueChange={(value) => setNewReservation({ ...newReservation, time: value })}
+                            disabled={!newReservation.serviceId || isLoadingAdminFormSlots || availableAdminTimes.length === 0}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder={
+                                !newReservation.serviceId ? "Najprv vyberte službu" :
+                                isLoadingAdminFormSlots ? "Načítavam..." :
+                                availableAdminTimes.length === 0 ? "Žiadne dostupné časy" :
+                                "Vyberte čas"
+                              } />
+                            </SelectTrigger>
+                            <SelectContent className="bg-card max-h-60">
+                              {availableAdminTimes.map((time) => (
+                                <SelectItem key={time} value={time}>{time}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
                     </div>
                     <div>
                       <Label>Poznámka</Label>
