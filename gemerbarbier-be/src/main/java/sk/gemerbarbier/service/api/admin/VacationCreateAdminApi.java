@@ -5,5 +5,7 @@ import java.time.LocalTime;
 
 public interface VacationCreateAdminApi {
 
-  void createVacation(Long barberId, LocalDate date, LocalTime startTime, LocalTime endTime);
+  void createVacation(
+      Long barberId, LocalDate date, LocalTime startTime, LocalTime endTime,
+      int slotDurationMinutes);
 }

@@ -25,7 +25,7 @@ export interface ReservationAdmin {
   customerName: string;
   customerEmail?: string;
   customerPhone?: string;
-  cutServiceName: string;
+  cutServiceName: string | null;
   note?: string;
   status: 'CREATED' | 'CANCELLED';
 }
@@ -45,6 +45,7 @@ export interface VacationCreateAdminRequest {
   date: string; // YYYY-MM-DD
   startTime: string; // HH:mm
   endTime: string; // HH:mm
+  slotDurationMinutes: number; // 20 | 40 | 60
 }
 
 export type StatisticsPeriod = 'WEEK' | 'MONTH' | 'YEAR';

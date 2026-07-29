@@ -20,7 +20,8 @@ public class VacationAdminController implements VacationAdminApi {
         requestDto.getBarberId(),
         requestDto.getDate(),
         LocalTime.parse(requestDto.getStartTime()),
-        LocalTime.parse(requestDto.getEndTime())
+        LocalTime.parse(requestDto.getEndTime()),
+        requestDto.getSlotDurationMinutes()
     );
     return ResponseEntity.status(201).build();
   }

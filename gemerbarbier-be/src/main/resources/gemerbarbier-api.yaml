@@ -392,7 +392,7 @@ components:
           type: string
     VacationCreateAdminRequest:
       type: object
-      required: [ barberId, date, startTime, endTime ]
+      required: [ barberId, date, startTime, endTime, slotDurationMinutes ]
       properties:
         barberId:
           type: integer
@@ -406,6 +406,9 @@ components:
         endTime:
           type: string
           example: "18:00"
+        slotDurationMinutes:
+          type: integer
+          format: int32
     ReservationResponse:
       type: object
       properties:

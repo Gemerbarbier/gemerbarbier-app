@@ -170,6 +170,7 @@ const AdminDashboard = () => {
     time: "",
     timeFrom: "08:00",
     timeTo: "18:00",
+    slotDuration: "20",
     serviceId: "",
     note: "",
     customerName: "",
@@ -467,7 +468,7 @@ const AdminDashboard = () => {
   };
 
   const handleAddReservation = async () => {
-    const resetForm = () => setNewReservation({ date: "", time: "", timeFrom: "08:00", timeTo: "18:00", serviceId: "", note: "", customerName: "", customerEmail: "", customerPhone: "" });
+    const resetForm = () => setNewReservation({ date: "", time: "", timeFrom: "08:00", timeTo: "18:00", slotDuration: "20", serviceId: "", note: "", customerName: "", customerEmail: "", customerPhone: "" });
 
     if (newReservation.serviceId === "DOVOLENKA") {
       if (!newReservation.date) {
@@ -487,6 +488,7 @@ const AdminDashboard = () => {
         date: isoDate,
         startTime: newReservation.timeFrom,
         endTime: newReservation.timeTo,
+        slotDurationMinutes: parseInt(newReservation.slotDuration),
       });
       if (response.success) {
         resetForm();
@@ -982,22 +984,40 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                       {newReservation.serviceId === "DOVOLENKA" ? (
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <Label>Čas od *</Label>
-                            <Input
-                              type="time"
-                              value={newReservation.timeFrom}
-                              onChange={(e) => setNewReservation({ ...newReservation, timeFrom: e.target.value })}
-                            />
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label>Čas od *</Label>
+                              <Input
+                                type="time"
+                                value={newReservation.timeFrom}
+                                onChange={(e) => setNewReservation({ ...newReservation, timeFrom: e.target.value })}
+                              />
+                            </div>
+                            <div>
+                              <Label>Čas do *</Label>
+                              <Input
+                                type="time"
+                                value={newReservation.timeTo}
+                                onChange={(e) => setNewReservation({ ...newReservation, timeTo: e.target.value })}
+                              />
+                            </div>
                           </div>
                           <div>
-                            <Label>Čas do *</Label>
-                            <Input
-                              type="time"
-                              value={newReservation.timeTo}
-                              onChange={(e) => setNewReservation({ ...newReservation, timeTo: e.target.value })}
-                            />
+                            <Label>Dĺžka slotu *</Label>
+                            <Select
+                              value={newReservation.slotDuration}
+                              onValueChange={(value) => setNewReservation({ ...newReservation, slotDuration: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-card">
+                                <SelectItem value="20">20 minút</SelectItem>
+                                <SelectItem value="40">40 minút</SelectItem>
+                                <SelectItem value="60">60 minút</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </div>
                         </div>
                       ) : (
@@ -1060,7 +1080,9 @@ const AdminDashboard = () => {
                 {activeReservations
                   .sort((a, b) => a.startTime.localeCompare(b.startTime))
                   .map((reservation) => {
-                    const serviceConfig = getServiceConfig(reservation.cutServiceName);
+                    const serviceConfig = reservation.cutServiceName
+                      ? getServiceConfig(reservation.cutServiceName)
+                      : undefined;
                     const IconComponent = serviceConfig?.icon || Scissors;
 
                     return (
@@ -1093,13 +1115,15 @@ const AdminDashboard = () => {
                                   <span className="text-sm sm:text-base font-bold text-accent">
                                     {formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}
                                   </span>
-                                  <span className={cn(
-                                    "text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full truncate max-w-[120px] sm:max-w-none",
-                                    serviceConfig?.bg || "bg-accent/20",
-                                    serviceConfig?.text || "text-accent"
-                                  )}>
-                                    {reservation.cutServiceName}
-                                  </span>
+                                  {reservation.cutServiceName && (
+                                    <span className={cn(
+                                      "text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full truncate max-w-[120px] sm:max-w-none",
+                                      serviceConfig?.bg || "bg-accent/20",
+                                      serviceConfig?.text || "text-accent"
+                                    )}>
+                                      {reservation.cutServiceName}
+                                    </span>
+                                  )}
                                 </div>
                                 {/* Additional details */}
                                 <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1.5">
