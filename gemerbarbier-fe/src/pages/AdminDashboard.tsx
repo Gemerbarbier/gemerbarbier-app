@@ -1705,7 +1705,7 @@ const AdminDashboard = () => {
                             <p className="text-[11px] text-muted-foreground italic">Bez rezervácií</p>
                           ) : (
                             list.map((r) => {
-                              const cfg = getServiceConfig(r.cutServiceName);
+                              const cfg = r.cutServiceName ? getServiceConfig(r.cutServiceName) : undefined;
                               return (
                                 <button
                                   key={r.id}
@@ -1777,7 +1777,7 @@ const AdminDashboard = () => {
                           </div>
                           <div className="space-y-0.5 flex-1 overflow-hidden">
                             {list.slice(0, 3).map((r) => {
-                              const cfg = getServiceConfig(r.cutServiceName);
+                              const cfg = r.cutServiceName ? getServiceConfig(r.cutServiceName) : undefined;
                               return (
                                 <div
                                   key={r.id}
