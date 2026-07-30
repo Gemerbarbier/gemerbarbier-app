@@ -1197,8 +1197,8 @@ const AdminDashboard = () => {
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button
                   size="sm"
-                  className="bg-muted/80 hover:bg-muted text-muted-foreground gap-1 sm:gap-2 text-xs sm:text-sm w-full sm:w-auto"
-                  disabled={selectedDate < localDateStr(new Date())}
+                  className="bg-blue-500/80 hover:bg-blue-500 text-white gap-1 sm:gap-2 text-xs sm:text-sm w-full sm:w-auto"
+                  disabled={selectedDate < localDateStr(new Date()) || timeSlots.length > 0}
                   onClick={async () => {
                     if (!currentBarberId) return;
                     if (!confirm("Vytvoriť neaktívne sloty od 10:00 do 16:00 pre tento deň?")) return;
@@ -1220,8 +1220,7 @@ const AdminDashboard = () => {
                   }}
                 >
                   <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Vytvoriť sloty</span>
-                  <span className="sm:hidden">Vytvoriť sloty</span>
+                  Vytvoriť sloty
                 </Button>
                 <Button
                   size="sm"
@@ -1244,8 +1243,7 @@ const AdminDashboard = () => {
                   }}
                 >
                   <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Deaktivovať všetky</span>
-                  <span className="sm:hidden">Deaktivovať</span>
+                  Deaktivovať sloty
                 </Button>
               </div>
             </div>
