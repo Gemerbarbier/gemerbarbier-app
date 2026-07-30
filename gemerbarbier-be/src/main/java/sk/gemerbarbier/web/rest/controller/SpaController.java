@@ -17,4 +17,9 @@ public class SpaController {
     response.setHeader("Pragma", "no-cache");
     return "forward:/index.html";
   }
+
+  @GetMapping("/reservation")
+  public String redirectReservation() {
+    return "redirect:/";
+  }
 }
