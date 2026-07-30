@@ -1,5 +1,6 @@
 package sk.gemerbarbier.web.rest.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 
@@ -11,7 +12,9 @@ public class SpaController {
       "/admin-dashboard",
       "/admin-dashboard/**"
   })
-  public String forward() {
+  public String forward(HttpServletResponse response) {
+    response.setHeader("Cache-Control", "no-store");
+    response.setHeader("Pragma", "no-cache");
     return "forward:/index.html";
   }
 }
