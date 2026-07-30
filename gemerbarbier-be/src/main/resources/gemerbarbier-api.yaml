@@ -85,6 +85,24 @@ paths:
           description: Time slots deactivated
         404:
           description: Barber not found
+  /admin/barbers/{barberId}/time-slots/generate:
+    post:
+      tags: [ TimeSlotAdmin ]
+      summary: Generate inactive time slots for a given time range
+      operationId: generateTimeSlots
+      parameters:
+        - $ref: '#/components/parameters/barberIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TimeSlotGenerateAdminRequest'
+      responses:
+        201:
+          description: Created
+        404:
+          description: Barber not found
   /admin/time-slots/{slotId}/status:
     patch:
       tags: [ TimeSlotAdmin ]
@@ -343,6 +361,19 @@ components:
         endTime:
           type: string
           format: date-time
+    TimeSlotGenerateAdminRequest:
+      type: object
+      required: [ date, startTime, endTime ]
+      properties:
+        date:
+          type: string
+          format: date
+        startTime:
+          type: string
+          example: "10:00"
+        endTime:
+          type: string
+          example: "16:00"
     TimeSlotStatusUpdateRequest:
       type: object
       required: [ status ]

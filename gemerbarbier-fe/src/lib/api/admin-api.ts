@@ -48,6 +48,12 @@ export interface VacationCreateAdminRequest {
   slotDurationMinutes: number; // 20 | 40 | 60
 }
 
+export interface TimeSlotGenerateAdminRequest {
+  date: string; // YYYY-MM-DD
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+}
+
 export type StatisticsPeriod = 'WEEK' | 'MONTH' | 'YEAR';
 
 export interface ServiceStatisticsResponse {
@@ -123,6 +129,20 @@ export async function deactivateAllTimeSlots(
 }
 
 /**
+ * Generate inactive time slots for a given time range
+ * POST /admin/barbers/{barberId}/time-slots/generate
+ */
+export async function generateInactiveTimeSlots(
+  barberId: string,
+  data: TimeSlotGenerateAdminRequest
+): Promise<ApiResponse<void>> {
+  return httpClient<void>(`/admin/barbers/${barberId}/time-slots/generate`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/**
  * Create a vacation block as admin
  * POST /admin/vacations
  */
@@ -172,6 +192,7 @@ export const adminApi = {
   createVacation: createAdminVacation,
   cancelReservation: cancelAdminReservation,
   deactivateAllTimeSlots,
+  generateInactiveTimeSlots,
   getServiceStatistics,
 };
 

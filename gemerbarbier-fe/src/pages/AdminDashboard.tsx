@@ -55,6 +55,7 @@ import {
   cancelAdminReservation,
   updateTimeSlotStatus,
   deactivateAllTimeSlots,
+  generateInactiveTimeSlots,
   getServiceStatistics,
   type TimeSlotAdmin,
   type ReservationAdmin,
@@ -1193,30 +1194,60 @@ const AdminDashboard = () => {
               <h2 className="text-base sm:text-xl font-semibold">
                 Časové sloty na {new Date(selectedDate).toLocaleDateString("sk-SK")}
               </h2>
-              <Button
-                size="sm"
-                className="bg-red-400/80 hover:bg-red-400 text-white gap-1 sm:gap-2 text-xs sm:text-sm w-full sm:w-auto"
-                disabled={selectedDate < localDateStr(new Date())}
-                onClick={async () => {
-                  if (!currentBarberId) return;
-                  if (!confirm("Naozaj chcete deaktivovať všetky časové sloty na tento deň?")) return;
-                  try {
-                    const response = await deactivateAllTimeSlots(currentBarberId, selectedDate);
-                    if (response.success) {
-                      toast({ title: "Sloty deaktivované", description: "Všetky časové sloty boli deaktivované." });
-                      fetchTimeSlots();
-                    } else {
-                      toast({ title: "Chyba", description: response.error?.message || "Nepodarilo sa deaktivovať sloty.", variant: "destructive" });
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button
+                  size="sm"
+                  className="bg-muted/80 hover:bg-muted text-muted-foreground gap-1 sm:gap-2 text-xs sm:text-sm w-full sm:w-auto"
+                  disabled={selectedDate < localDateStr(new Date())}
+                  onClick={async () => {
+                    if (!currentBarberId) return;
+                    if (!confirm("Vytvoriť neaktívne sloty od 10:00 do 16:00 pre tento deň?")) return;
+                    try {
+                      const response = await generateInactiveTimeSlots(currentBarberId, {
+                        date: selectedDate,
+                        startTime: "10:00",
+                        endTime: "16:00",
+                      });
+                      if (response.success) {
+                        toast({ title: "Sloty vytvorené", description: "Neaktívne sloty 10:00–16:00 boli vytvorené." });
+                        fetchTimeSlots();
+                      } else {
+                        toast({ title: "Chyba", description: response.error?.message || "Nepodarilo sa vytvoriť sloty.", variant: "destructive" });
+                      }
+                    } catch {
+                      toast({ title: "Chyba", description: "Nepodarilo sa vytvoriť sloty.", variant: "destructive" });
                     }
-                  } catch {
-                    toast({ title: "Chyba", description: "Nepodarilo sa deaktivovať sloty.", variant: "destructive" });
-                  }
-                }}
-              >
-                <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">Deaktivovať všetky</span>
-                <span className="sm:hidden">Deaktivovať</span>
-              </Button>
+                  }}
+                >
+                  <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Vytvoriť sloty</span>
+                  <span className="sm:hidden">Vytvoriť sloty</span>
+                </Button>
+                <Button
+                  size="sm"
+                  className="bg-red-400/80 hover:bg-red-400 text-white gap-1 sm:gap-2 text-xs sm:text-sm w-full sm:w-auto"
+                  disabled={selectedDate < localDateStr(new Date())}
+                  onClick={async () => {
+                    if (!currentBarberId) return;
+                    if (!confirm("Naozaj chcete deaktivovať všetky časové sloty na tento deň?")) return;
+                    try {
+                      const response = await deactivateAllTimeSlots(currentBarberId, selectedDate);
+                      if (response.success) {
+                        toast({ title: "Sloty deaktivované", description: "Všetky časové sloty boli deaktivované." });
+                        fetchTimeSlots();
+                      } else {
+                        toast({ title: "Chyba", description: response.error?.message || "Nepodarilo sa deaktivovať sloty.", variant: "destructive" });
+                      }
+                    } catch {
+                      toast({ title: "Chyba", description: "Nepodarilo sa deaktivovať sloty.", variant: "destructive" });
+                    }
+                  }}
+                >
+                  <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Deaktivovať všetky</span>
+                  <span className="sm:hidden">Deaktivovať</span>
+                </Button>
+              </div>
             </div>
 
             {isLoadingSlots ? (
