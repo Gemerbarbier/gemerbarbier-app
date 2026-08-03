@@ -21,7 +21,6 @@ public interface ReservationMapper {
   @Mapping(target = "id", ignore = true)
   Reservation toReservation(ReservationRequest request);
 
-  @Mapping(target = "note", ignore = true)
   ReservationRequest toReservationRequest(ReservationCreateRequestDto requestDto);
 
   ReservationRequest toReservationRequest(ReservationCreateAdminRequestDto requestDto);

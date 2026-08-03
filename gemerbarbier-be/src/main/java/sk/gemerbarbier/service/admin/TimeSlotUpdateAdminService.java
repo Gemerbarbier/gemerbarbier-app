@@ -17,7 +17,8 @@ public class TimeSlotUpdateAdminService implements TimeSlotUpdateAdminApi {
     var slot = timeSlotStorageApi.getById(slotId);
 
     if (TimeSlotStatus.RESERVED.equals(slot.getStatus())) {
-      throw new IllegalStateException("Cannot modify reserved slot");
+      throw new IllegalStateException(
+          "Obsadený slot nie je možné zmeniť. Najprv zrušte rezerváciu.");
     }
 
     slot.setStatus(newStatus);

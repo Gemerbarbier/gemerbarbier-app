@@ -387,29 +387,17 @@ components:
       properties:
         customerName:
           type: string
+          minLength: 2
+          maxLength: 100
         customerEmail:
           type: string
+          format: email
+          minLength: 5
+          maxLength: 254
         customerPhone:
           type: string
-        barberId:
-          type: integer
-          format: int64
-        serviceId:
-          type: integer
-          format: int64
-        startTime:
-          type: string
-          format: date-time
-    ReservationCreateAdminRequest:
-      type: object
-      required: [ customerName, barberId, serviceId, startTime ]
-      properties:
-        customerName:
-          type: string
-        customerEmail:
-          type: string
-        customerPhone:
-          type: string
+          minLength: 6
+          maxLength: 32
         barberId:
           type: integer
           format: int64
@@ -421,6 +409,34 @@ components:
           format: date-time
         note:
           type: string
+          maxLength: 255
+    ReservationCreateAdminRequest:
+      type: object
+      required: [ customerName, barberId, serviceId, startTime ]
+      properties:
+        customerName:
+          type: string
+          minLength: 2
+          maxLength: 100
+        customerEmail:
+          type: string
+          format: email
+          maxLength: 254
+        customerPhone:
+          type: string
+          maxLength: 32
+        barberId:
+          type: integer
+          format: int64
+        serviceId:
+          type: integer
+          format: int64
+        startTime:
+          type: string
+          format: date-time
+        note:
+          type: string
+          maxLength: 255
     VacationCreateAdminRequest:
       type: object
       required: [ barberId, date, startTime, endTime, slotDurationMinutes ]

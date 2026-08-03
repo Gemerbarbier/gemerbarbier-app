@@ -11,6 +11,7 @@ import sk.gemerbarbier.entity.ReservationStatus;
 import sk.gemerbarbier.entity.TimeSlot;
 import sk.gemerbarbier.entity.TimeSlotStatus;
 import sk.gemerbarbier.mapper.ReservationMapper;
+import sk.gemerbarbier.service.ReservationTimeValidator;
 import sk.gemerbarbier.service.api.admin.ReservationCreateAdminApi;
 import sk.gemerbarbier.storage.api.BarberStorageApi;
 import sk.gemerbarbier.storage.api.CutServiceStorageApi;
@@ -35,11 +36,13 @@ public class ReservationCreateAdminService implements ReservationCreateAdminApi 
     var start = request.startTime();
     var end = start.plusMinutes(service.getDurationMinutes());
 
+    ReservationTimeValidator.validateOnSlotGrid(start);
+
     var slots = timeSlotStorage.getTimeSlots(request.barberId(), start, end.minusSeconds(1));
 
     boolean alreadyTaken = slots.stream().anyMatch(s -> TimeSlotStatus.RESERVED.equals(s.getStatus()));
     if (alreadyTaken) {
-      throw new IllegalStateException("Na tomto čase už existuje rezervácia");
+      throw new IllegalStateException("Na tomto čase už existuje rezervácia.");
     }
 
     slots.forEach(s -> s.setStatus(TimeSlotStatus.RESERVED));
@@ -76,7 +79,7 @@ public class ReservationCreateAdminService implements ReservationCreateAdminApi 
       try {
         timeSlotStorage.saveAll(newSlots);
       } catch (DataIntegrityViolationException e) {
-        throw new IllegalStateException("Na tomto čase už existuje rezervácia");
+        throw new IllegalStateException("Na tomto čase už existuje rezervácia.");
       }
     }
   }

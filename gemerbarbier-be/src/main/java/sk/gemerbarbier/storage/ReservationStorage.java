@@ -26,7 +26,7 @@ public class ReservationStorage implements ReservationStorageApi {
     try {
       repository.save(reservation);
     } catch (DataIntegrityViolationException e) {
-      throw new IllegalStateException("Tento dátum rezervácie je už obsadený.");
+      throw new IllegalStateException("Tento termín je už obsadený. Vyberte prosím iný čas.");
     }
   }
 
@@ -37,6 +37,13 @@ public class ReservationStorage implements ReservationStorageApi {
         barberId, from, to);
 
     return repository.findByBarberIdAndStartTimeBetween(barberId, from, to);
+  }
+
+  @Override
+  public List<Reservation> getReservationsFrom(Long barberId, LocalDateTime from) {
+    logger.debug("Getting reservations for barber with id {} ending after {}.", barberId, from);
+
+    return repository.findByBarberIdAndEndTimeAfter(barberId, from);
   }
 
   @Override

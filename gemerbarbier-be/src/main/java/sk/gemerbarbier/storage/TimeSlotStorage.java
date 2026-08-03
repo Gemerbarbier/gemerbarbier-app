@@ -35,6 +35,14 @@ public class TimeSlotStorage implements TimeSlotStorageApi {
   }
 
   @Override
+  public List<TimeSlot> getTimeSlotsFrom(Long barberId, LocalDateTime from, TimeSlotStatus status) {
+    logger.debug("Getting time slot list for barber with id {} from {} with status {}.",
+        barberId, from, status);
+    return repository.findByBarberIdAndStartTimeAfterAndStatusOrderByStartTimeAsc(barberId, from,
+        status);
+  }
+
+  @Override
   public TimeSlot getById(Long slotId) {
     logger.debug("Getting time by id {}.", slotId);
     return repository.findById(slotId).orElseThrow(

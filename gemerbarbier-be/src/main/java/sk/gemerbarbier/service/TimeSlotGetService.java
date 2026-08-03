@@ -28,10 +28,9 @@ public class TimeSlotGetService implements TimeSlotGetApi {
     int requiredSlots = service.getDurationMinutes() / 20;
 
     var now = LocalDateTime.now(ZoneId.of("Europe/Bratislava"));
-    var to = now.plusDays(30);
 
-    var slots = timeSlotStorage.getTimeSlots(barberId, now, to, TimeSlotStatus.ACTIVE);
-    var reservations = reservationStorage.getReservations(barberId, now, to);
+    var slots = timeSlotStorage.getTimeSlotsFrom(barberId, now, TimeSlotStatus.ACTIVE);
+    var reservations = reservationStorage.getReservationsFrom(barberId, now);
 
     var availableStarts = new ArrayList<TimeSlot>();
     for (int i = 0; i <= slots.size() - requiredSlots; i++) {

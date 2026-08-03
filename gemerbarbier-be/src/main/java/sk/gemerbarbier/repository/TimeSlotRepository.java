@@ -16,6 +16,9 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, Long> {
   List<TimeSlot> findByBarberIdAndStartTimeBetweenAndStatusOrderByStartTimeAsc(Long barberId,
       LocalDateTime startTimeFrom, LocalDateTime startTimeTo, TimeSlotStatus status);
 
+  List<TimeSlot> findByBarberIdAndStartTimeAfterAndStatusOrderByStartTimeAsc(Long barberId,
+      LocalDateTime startTimeFrom, TimeSlotStatus status);
+
   @Modifying
   @Query("""
           UPDATE TimeSlot t

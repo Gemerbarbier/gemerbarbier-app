@@ -12,6 +12,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
   List<Reservation> findByBarberIdAndStartTimeBetween(Long barberId, LocalDateTime timeFrom,
       LocalDateTime timeTo);
 
+  List<Reservation> findByBarberIdAndEndTimeAfter(Long barberId, LocalDateTime timeFrom);
+
   @Query("""
       SELECT new sk.gemerbarbier.domain.ServiceStatistic(
           r.cutService.name,

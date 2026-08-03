@@ -12,6 +12,8 @@ public interface TimeSlotStorageApi {
 
   List<TimeSlot> getTimeSlots(Long barberId, LocalDateTime from, LocalDateTime to);
 
+  List<TimeSlot> getTimeSlotsFrom(Long barberId, LocalDateTime from, TimeSlotStatus status);
+
   TimeSlot getById(Long slotId);
 
   void deactivateTimeSlots(Long barberId, LocalDateTime from, LocalDateTime to);

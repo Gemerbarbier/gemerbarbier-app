@@ -288,6 +288,8 @@ const Reservation = () => {
                   value={formData.name}
                   onChange={handleChange}
                   required
+                  minLength={2}
+                  maxLength={100}
                   className="bg-background border-border focus:border-accent"
                 />
               </div>
@@ -302,6 +304,7 @@ const Reservation = () => {
                   value={formData.email}
                   onChange={handleChange}
                   required
+                  maxLength={254}
                   className="bg-background border-border focus:border-accent"
                 />
               </div>
@@ -317,6 +320,8 @@ const Reservation = () => {
                 value={formData.phone}
                 onChange={handleChange}
                 required
+                minLength={6}
+                maxLength={32}
                 className="bg-background border-border focus:border-accent"
               />
             </div>
@@ -460,6 +465,7 @@ const Reservation = () => {
                 value={formData.note}
                 onChange={(e) => setFormData({ ...formData, note: e.target.value })}
                 rows={3}
+                maxLength={255}
                 className="w-full px-3 py-2 rounded-md border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 resize-none"
               />
             </div>
