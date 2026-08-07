@@ -16,6 +16,26 @@ const BRAND = {
   border: "#e0e0e0",
 };
 
+const BARBERS = [
+  {
+    match: ["viliam", "vilo", "knotek"],
+    name: "Viliam Knotek",
+    phone: "+421 940 194 630",
+    messenger: "Viliam Kroxy Knotek",
+  },
+  {
+    match: ["jakub", "kubo", "herich", "bača", "baca"],
+    name: "Jakub Herich",
+    phone: "+421 918 165 273",
+    messenger: "Jakub Bača Herich",
+  },
+];
+
+function findBarber(barberName: string) {
+  const n = (barberName || "").toLowerCase();
+  return BARBERS.find((b) => b.match.some((m) => n.includes(m)));
+}
+
 function layout(innerHtml: string): string {
   return `
     <!DOCTYPE html>
@@ -27,15 +47,15 @@ function layout(innerHtml: string): string {
       <meta name="supported-color-schemes" content="light">
     </head>
     <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: ${BRAND.lightBg}; -webkit-font-smoothing: antialiased;">
-      <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
-        <div style="text-align: center; margin-bottom: 32px;">
-          <h1 style="color: ${BRAND.gold}; font-size: 30px; margin: 0; letter-spacing: 3px; font-weight: 700;">${BRAND.name.toUpperCase()}</h1>
-          <p style="color: ${BRAND.muted}; font-size: 14px; margin-top: 6px; letter-spacing: 1px;">${BRAND.tagline}</p>
+      <div style="max-width: 600px; margin: 0 auto; padding: 32px 16px;">
+        <div style="text-align: center; margin-bottom: 28px;">
+          <h1 style="color: ${BRAND.gold}; font-size: 26px; margin: 0; letter-spacing: 2px; font-weight: 700;">${BRAND.name.toUpperCase()}</h1>
+          <p style="color: ${BRAND.muted}; font-size: 13px; margin-top: 6px; letter-spacing: 1px;">${BRAND.tagline}</p>
         </div>
-        <div style="background: ${BRAND.white}; border: 1px solid ${BRAND.border}; border-radius: 12px; padding: 32px; box-shadow: 0 8px 30px rgba(0,0,0,0.08);">
+        <div style="background: ${BRAND.white}; border: 1px solid ${BRAND.border}; border-radius: 12px; padding: 24px;">
           ${innerHtml}
         </div>
-        <div style="text-align: center; margin-top: 32px;">
+        <div style="text-align: center; margin-top: 28px;">
           <p style="color: ${BRAND.muted}; font-size: 12px; margin: 0;">© ${new Date().getFullYear()} ${BRAND.name}. Všetky práva vyhradené.</p>
           <p style="color: ${BRAND.muted}; font-size: 12px; margin: 8px 0 0 0;">
             <a href="https://gemerbarbier.sk" style="color: ${BRAND.gold}; text-decoration: none;">gemerbarbier.sk</a>
@@ -47,22 +67,67 @@ function layout(innerHtml: string): string {
   `;
 }
 
+// Stacked row: label on its own line, value below → nothing overflows on mobile.
 function row(label: string, value: string, isLast = false): string {
-  const border = isLast ? "" : "border-bottom: 1px solid #eeeeee;";
+  const border = isLast ? "" : `border-bottom: 1px solid #eeeeee;`;
   return `
     <tr>
-      <td style="padding: 14px 0; ${border} vertical-align: top;">
-        <span style="color: ${BRAND.muted}; font-size: 14px; display: block;">${label}</span>
-      </td>
-      <td style="padding: 14px 0; ${border} text-align: right; vertical-align: top;">
-        <span style="color: ${BRAND.text}; font-size: 15px; font-weight: 600; display: block;">${value}</span>
+      <td style="padding: 10px 0; ${border}">
+        <div style="color: ${BRAND.muted}; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px;">${label}</div>
+        <div style="color: ${BRAND.text}; font-size: 16px; font-weight: 600; line-height: 1.4; word-break: break-word;">${value}</div>
       </td>
     </tr>
   `;
 }
 
 function divider(): string {
-  return `<div style="height: 1px; background: linear-gradient(90deg, transparent, ${BRAND.gold}, transparent); margin: 24px 0;"></div>`;
+  return `<div style="height: 1px; background: ${BRAND.border}; margin: 20px 0;"></div>`;
+}
+
+function contactBlock(barberName: string): string {
+  const b = findBarber(barberName);
+  const shop = `
+    <p style="color: ${BRAND.text}; font-size: 14px; margin: 0 0 6px 0; line-height: 1.6;">
+      <strong style="color: ${BRAND.gold};">E-mail:</strong>
+      <a href="mailto:gemerbarbierra@gmail.com" style="color: ${BRAND.text};">gemerbarbierra@gmail.com</a>
+    </p>
+    <p style="color: ${BRAND.text}; font-size: 14px; margin: 0; line-height: 1.6;">
+      <strong style="color: ${BRAND.gold};">Adresa:</strong> Magnezitárov 1209/9, 050 01 Revúca
+    </p>
+  `;
+
+  const barberPart = b
+    ? `
+      <p style="color: ${BRAND.text}; font-size: 14px; margin: 0 0 6px 0; line-height: 1.6;">
+        <strong style="color: ${BRAND.gold};">${b.name}</strong>
+      </p>
+      <p style="color: ${BRAND.text}; font-size: 14px; margin: 0 0 6px 0; line-height: 1.6;">
+        <strong style="color: ${BRAND.gold};">Telefón:</strong>
+        <a href="tel:${b.phone.replace(/\s+/g, "")}" style="color: ${BRAND.text};">${b.phone}</a>
+      </p>
+      <p style="color: ${BRAND.text}; font-size: 14px; margin: 0 0 14px 0; line-height: 1.6;">
+        <strong style="color: ${BRAND.gold};">Messenger:</strong> ${b.messenger}
+      </p>
+    `
+    : BARBERS.map(
+        (x) => `
+      <p style="color: ${BRAND.text}; font-size: 14px; margin: 0 0 6px 0; line-height: 1.6;">
+        <strong style="color: ${BRAND.gold};">${x.name}</strong> –
+        <a href="tel:${x.phone.replace(/\s+/g, "")}" style="color: ${BRAND.text};">${x.phone}</a>
+      </p>
+    `,
+      ).join("") + `<div style="height: 8px;"></div>`;
+
+  return `
+    <div style="background: #fffbeb; border: 1px solid #f3e8c6; border-radius: 8px; padding: 18px; margin-top: 16px;">
+      <p style="color: ${BRAND.gold}; font-size: 14px; margin: 0 0 10px 0; font-weight: 700;">Kontakt</p>
+      <p style="color: ${BRAND.muted}; font-size: 13px; margin: 0 0 14px 0; line-height: 1.6;">
+        V prípade zmeny alebo zrušenia rezervácie nás kontaktujte telefonicky, e-mailom alebo cez Messenger.
+      </p>
+      ${barberPart}
+      ${shop}
+    </div>
+  `;
 }
 
 // ============= Template payloads =============
@@ -90,10 +155,10 @@ function reservationConfirmation(p: ReservationPayload) {
   });
 
   const inner = `
-    <h2 style="color: ${BRAND.text}; font-size: 24px; margin: 0 0 8px 0; font-weight: 700;">Dobrý deň, ${p.customerName}!</h2>
-    <p style="color: ${BRAND.muted}; font-size: 16px; margin: 0 0 32px 0; line-height: 1.5;">Vaša rezervácia bola úspešne prijatá.</p>
+    <h2 style="color: ${BRAND.text}; font-size: 22px; margin: 0 0 8px 0; font-weight: 700; line-height: 1.3;">Dobrý deň, ${p.customerName}!</h2>
+    <p style="color: ${BRAND.muted}; font-size: 15px; margin: 0 0 20px 0; line-height: 1.5;">Vaša rezervácia bola úspešne prijatá.</p>
     ${divider()}
-    <h3 style="color: ${BRAND.gold}; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 20px 0; font-weight: 700;">Detaily rezervácie</h3>
+    <h3 style="color: ${BRAND.gold}; font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 12px 0; font-weight: 700;">Detaily rezervácie</h3>
     <table style="width: 100%; border-collapse: collapse;">
       ${row("Dátum", formattedDate)}
       ${row("Čas", p.time)}
@@ -101,27 +166,14 @@ function reservationConfirmation(p: ReservationPayload) {
       ${row("Trvanie", `${p.serviceDuration} minút`)}
       ${row("Barber", p.barberName)}
       <tr>
-        <td style="padding: 16px 0; vertical-align: top;"><span style="color: ${BRAND.muted}; font-size: 14px;">Cena</span></td>
-        <td style="padding: 16px 0; text-align: right; vertical-align: top;"><span style="color: ${BRAND.gold}; font-size: 22px; font-weight: 700;">${p.servicePrice}€</span></td>
+        <td style="padding: 10px 0;">
+          <div style="color: ${BRAND.muted}; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px;">Cena</div>
+          <div style="color: ${BRAND.gold}; font-size: 22px; font-weight: 700;">${p.servicePrice}€</div>
+        </td>
       </tr>
     </table>
-    ${divider()}
-    <div style="background: #fffbeb; border: 1px solid #f3e8c6; border-radius: 8px; padding: 18px; margin-top: 16px;">
-      <p style="color: ${BRAND.gold}; font-size: 14px; margin: 0 0 12px 0; font-weight: 700;">📞 Kontakt na barbershop</p>
-      <p style="color: ${BRAND.muted}; font-size: 13px; margin: 0 0 14px 0; line-height: 1.6;">
-        V prípade zmeny alebo zrušenia rezervácie nás kontaktujte na telefónnom čísle, e-mailom, alebo prostredníctvom messengeru.
-      </p>
-      <p style="color: ${BRAND.text}; font-size: 13px; margin: 0 0 10px 0; line-height: 1.6;">
-        <strong style="color: ${BRAND.gold};">Telefón:</strong> +421 940 194 630, +421 918 165 273
-      </p>
-      <p style="color: ${BRAND.text}; font-size: 13px; margin: 0 0 10px 0; line-height: 1.6;">
-        <strong style="color: ${BRAND.gold};">E-mail:</strong> <a href="mailto:gemerbarbierra@gmail.com" style="color: ${BRAND.text}; text-decoration: underline;">gemerbarbierra@gmail.com</a>
-      </p>
-      <p style="color: ${BRAND.text}; font-size: 13px; margin: 0; line-height: 1.6;">
-        <strong style="color: ${BRAND.gold};">Adresa:</strong> Magnezitárov 1209/9, 050 01 Revúca
-      </p>
-    </div>
-    <p style="color: ${BRAND.muted}; font-size: 13px; margin: 24px 0 0 0; text-align: center; line-height: 1.5;">
+    ${contactBlock(p.barberName)}
+    <p style="color: ${BRAND.muted}; font-size: 13px; margin: 20px 0 0 0; text-align: center; line-height: 1.5;">
       Tešíme sa na vás!
     </p>
   `;
@@ -140,8 +192,8 @@ function reservationReminder(p: ReservationPayload) {
   });
 
   const inner = `
-    <h2 style="color: ${BRAND.text}; font-size: 24px; margin: 0 0 8px 0; font-weight: 700;">Pripomienka rezervácie</h2>
-    <p style="color: ${BRAND.muted}; font-size: 16px; margin: 0 0 32px 0; line-height: 1.5;">Tešíme sa na vás zajtra, ${p.customerName}!</p>
+    <h2 style="color: ${BRAND.text}; font-size: 22px; margin: 0 0 8px 0; font-weight: 700; line-height: 1.3;">Pripomienka rezervácie</h2>
+    <p style="color: ${BRAND.muted}; font-size: 15px; margin: 0 0 20px 0; line-height: 1.5;">Tešíme sa na vás zajtra, ${p.customerName}!</p>
     ${divider()}
     <table style="width: 100%; border-collapse: collapse;">
       ${row("Dátum", formattedDate)}
@@ -149,22 +201,7 @@ function reservationReminder(p: ReservationPayload) {
       ${row("Služba", p.serviceName)}
       ${row("Barber", p.barberName, true)}
     </table>
-    ${divider()}
-    <div style="background: #fffbeb; border: 1px solid #f3e8c6; border-radius: 8px; padding: 18px; margin-top: 16px;">
-      <p style="color: ${BRAND.gold}; font-size: 14px; margin: 0 0 12px 0; font-weight: 700;">📞 Kontakt na barbershop</p>
-      <p style="color: ${BRAND.muted}; font-size: 13px; margin: 0 0 14px 0; line-height: 1.6;">
-        V prípade zmeny alebo zrušenia rezervácie nás kontaktujte na telefónnom čísle, e-mailom, alebo prostredníctvom messengeru.
-      </p>
-      <p style="color: ${BRAND.text}; font-size: 13px; margin: 0 0 10px 0; line-height: 1.6;">
-        <strong style="color: ${BRAND.gold};">Telefón:</strong> +421 940 194 630, +421 918 165 273
-      </p>
-      <p style="color: ${BRAND.text}; font-size: 13px; margin: 0 0 10px 0; line-height: 1.6;">
-        <strong style="color: ${BRAND.gold};">E-mail:</strong> <a href="mailto:gemerbarbierra@gmail.com" style="color: ${BRAND.text}; text-decoration: underline;">gemerbarbierra@gmail.com</a>
-      </p>
-      <p style="color: ${BRAND.text}; font-size: 13px; margin: 0; line-height: 1.6;">
-        <strong style="color: ${BRAND.gold};">Adresa:</strong> Magnezitárov 1209/9, 050 01 Revúca
-      </p>
-    </div>
+    ${contactBlock(p.barberName)}
   `;
 
   return {
