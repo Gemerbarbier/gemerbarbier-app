@@ -1,16 +1,34 @@
 import * as React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
+import { sk } from "date-fns/locale";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
-function Calendar({ className, classNames, showOutsideDays = true, ...props }: CalendarProps) {
+// Pondelok ako prvý deň týždňa + slovenské skratky dní
+const WEEKDAY_LABELS = ["Ned", "Pon", "Uto", "Str", "Štv", "Pia", "Sob"];
+
+function Calendar({
+  className,
+  classNames,
+  showOutsideDays = true,
+  locale = sk,
+  weekStartsOn = 1,
+  formatters,
+  ...props
+}: CalendarProps) {
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
+      locale={locale}
+      weekStartsOn={weekStartsOn}
+      formatters={{
+        formatWeekdayName: (date) => WEEKDAY_LABELS[date.getDay()],
+        ...formatters,
+      }}
       className={cn("p-3", className)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
