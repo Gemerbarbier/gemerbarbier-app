@@ -11,6 +11,21 @@ export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 // Pondelok ako prvý deň týždňa + slovenské skratky dní
 const WEEKDAY_LABELS = ["Ned", "Pon", "Uto", "Str", "Štv", "Pia", "Sob"];
 
+const MONTH_LABELS = [
+  "Január",
+  "Február",
+  "Marec",
+  "Apríl",
+  "Máj",
+  "Jún",
+  "Júl",
+  "August",
+  "September",
+  "Október",
+  "November",
+  "December",
+];
+
 function Calendar({
   className,
   classNames,
@@ -27,6 +42,8 @@ function Calendar({
       weekStartsOn={weekStartsOn}
       formatters={{
         formatWeekdayName: (date) => WEEKDAY_LABELS[date.getDay()],
+        formatCaption: (date) => `${MONTH_LABELS[date.getMonth()]} ${date.getFullYear()}`,
+        formatMonthCaption: (date) => MONTH_LABELS[date.getMonth()],
         ...formatters,
       }}
       className={cn("p-3", className)}
