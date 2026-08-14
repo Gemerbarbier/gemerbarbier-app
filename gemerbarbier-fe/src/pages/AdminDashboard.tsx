@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useConfirm } from "@/hooks/useConfirm";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import {
   Popover,
@@ -195,6 +196,7 @@ const AdminDashboard = () => {
 
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { confirm, confirmDialog } = useConfirm();
 
   useEffect(() => {
     const barberId = sessionStorage.getItem("barberId") || "";
@@ -459,7 +461,14 @@ const AdminDashboard = () => {
     // Dovolenka sa ruší blok po bloku, preto pri nej potvrdenie nepýtame.
     if (!isVacationReservation(reservation)) {
       const time = `${formatTime(reservation.startTime)} – ${formatTime(reservation.endTime)}`;
-      if (!confirm(`Naozaj chcete zrušiť rezerváciu ${reservation.customerName} (${time})?`)) return;
+      const confirmed = await confirm({
+        title: "Zrušiť rezerváciu?",
+        description: `${reservation.customerName} · ${time}${reservation.cutServiceName ? ` · ${reservation.cutServiceName}` : ""}. Túto akciu nie je možné vrátiť.`,
+        confirmLabel: "Zrušiť rezerváciu",
+        cancelLabel: "Ponechať",
+        variant: "destructive",
+      });
+      if (!confirmed) return;
     }
 
     const response = await cancelAdminReservation(reservation.id);
@@ -1211,7 +1220,12 @@ const AdminDashboard = () => {
                   disabled={selectedDate < localDateStr(new Date())}
                   onClick={async () => {
                     if (!currentBarberId) return;
-                    if (!confirm("Doplniť chýbajúce sloty od 10:00 do 16:00 pre tento deň? Existujúce sloty a rezervácie zostanú nezmenené.")) return;
+                    const confirmed = await confirm({
+                      title: "Vytvoriť sloty 10:00 – 16:00?",
+                      description: "Doplnia sa len chýbajúce sloty ako aktívne, obed 13:00 – 14:00 ako neaktívny. Existujúce sloty a rezervácie zostanú nezmenené.",
+                      confirmLabel: "Vytvoriť sloty",
+                    });
+                    if (!confirmed) return;
                     try {
                       const response = await generateTimeSlots(currentBarberId, {
                         date: selectedDate,
@@ -1238,7 +1252,13 @@ const AdminDashboard = () => {
                   disabled={selectedDate < localDateStr(new Date())}
                   onClick={async () => {
                     if (!currentBarberId) return;
-                    if (!confirm("Naozaj chcete deaktivovať všetky časové sloty na tento deň?")) return;
+                    const confirmed = await confirm({
+                      title: "Deaktivovať všetky sloty?",
+                      description: `Všetky časové sloty na ${new Date(selectedDate).toLocaleDateString("sk-SK")} sa označia ako neaktívne a prestanú byť dostupné na rezerváciu.`,
+                      confirmLabel: "Deaktivovať sloty",
+                      variant: "destructive",
+                    });
+                    if (!confirmed) return;
                     try {
                       const response = await deactivateAllTimeSlots(currentBarberId, selectedDate);
                       if (response.success) {
@@ -2007,6 +2027,8 @@ const AdminDashboard = () => {
             )}
           </DialogContent>
         </Dialog>
+
+        {confirmDialog}
       </main>
     </div>
   );
