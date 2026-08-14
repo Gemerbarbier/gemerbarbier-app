@@ -129,10 +129,11 @@ export async function deactivateAllTimeSlots(
 }
 
 /**
- * Generate inactive time slots for a given time range
+ * Generate missing time slots for a given time range (active, lunch 13:00-14:00 inactive)
+ * Existing slots (including reserved) are left untouched
  * POST /admin/barbers/{barberId}/time-slots/generate
  */
-export async function generateInactiveTimeSlots(
+export async function generateTimeSlots(
   barberId: string,
   data: TimeSlotGenerateAdminRequest
 ): Promise<ApiResponse<void>> {
@@ -192,7 +193,7 @@ export const adminApi = {
   createVacation: createAdminVacation,
   cancelReservation: cancelAdminReservation,
   deactivateAllTimeSlots,
-  generateInactiveTimeSlots,
+  generateTimeSlots,
   getServiceStatistics,
 };
 

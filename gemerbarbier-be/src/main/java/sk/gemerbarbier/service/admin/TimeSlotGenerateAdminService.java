@@ -18,6 +18,8 @@ import sk.gemerbarbier.storage.api.TimeSlotStorageApi;
 public class TimeSlotGenerateAdminService implements TimeSlotGenerateAdminApi {
 
   private static final int SLOT_DURATION_MINUTES = 20;
+  private static final LocalTime LUNCH_FROM = LocalTime.of(13, 0);
+  private static final LocalTime LUNCH_TO = LocalTime.of(14, 0);
 
   private final TimeSlotStorageApi timeSlotStorageApi;
   private final BarberStorageApi barberStorageApi;
@@ -29,6 +31,7 @@ public class TimeSlotGenerateAdminService implements TimeSlotGenerateAdminApi {
     var intervalFrom = date.atTime(startTime);
     var intervalTo = date.atTime(endTime);
 
+    // Existujúce sloty (vrátane rezervovaných) sa nikdy neprepisujú - dopĺňajú sa len chýbajúce.
     var existingSlots = timeSlotStorageApi.getTimeSlots(barberId, intervalFrom, intervalTo.minusSeconds(1));
     var existingStartTimes = existingSlots.stream()
         .map(TimeSlot::getStartTime)
@@ -46,7 +49,7 @@ public class TimeSlotGenerateAdminService implements TimeSlotGenerateAdminApi {
             .barber(barber)
             .startTime(current)
             .endTime(slotEnd)
-            .status(TimeSlotStatus.INACTIVE)
+            .status(isLunchBreak(current.toLocalTime()) ? TimeSlotStatus.INACTIVE : TimeSlotStatus.ACTIVE)
             .build());
       }
       current = current.plusMinutes(SLOT_DURATION_MINUTES);
@@ -54,5 +57,9 @@ public class TimeSlotGenerateAdminService implements TimeSlotGenerateAdminApi {
     if (!newSlots.isEmpty()) {
       timeSlotStorageApi.saveAll(newSlots);
     }
+  }
+
+  private static boolean isLunchBreak(LocalTime time) {
+    return !time.isBefore(LUNCH_FROM) && time.isBefore(LUNCH_TO);
   }
 }

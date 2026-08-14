@@ -55,7 +55,7 @@ import {
   cancelAdminReservation,
   updateTimeSlotStatus,
   deactivateAllTimeSlots,
-  generateInactiveTimeSlots,
+  generateTimeSlots,
   getServiceStatistics,
   type TimeSlotAdmin,
   type ReservationAdmin,
@@ -94,6 +94,10 @@ const getServiceConfig = (name: string) => {
   const lower = name.toLowerCase();
   return SERVICE_CONFIG_LIST.find(c => lower.includes(c.match));
 };
+
+// Dovolenka sa zakladá bez služby a s menom "Dovolenka" (VacationCreateAdminService)
+const isVacationReservation = (reservation: ReservationAdmin) =>
+  !reservation.cutServiceName && reservation.customerName?.trim().toLowerCase() === "dovolenka";
 
 const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -451,8 +455,14 @@ const AdminDashboard = () => {
     navigate("/admin-dashboard/login");
   };
 
-  const handleCancelReservation = async (id: number) => {
-    const response = await cancelAdminReservation(id);
+  const handleCancelReservation = async (reservation: ReservationAdmin) => {
+    // Dovolenka sa ruší blok po bloku, preto pri nej potvrdenie nepýtame.
+    if (!isVacationReservation(reservation)) {
+      const time = `${formatTime(reservation.startTime)} – ${formatTime(reservation.endTime)}`;
+      if (!confirm(`Naozaj chcete zrušiť rezerváciu ${reservation.customerName} (${time})?`)) return;
+    }
+
+    const response = await cancelAdminReservation(reservation.id);
     if (response.success) {
       toast({
         title: "Rezervácia zrušená",
@@ -1157,7 +1167,7 @@ const AdminDashboard = () => {
                               variant="destructive"
                               size="icon"
                               className="h-8 w-8 sm:h-9 sm:w-9"
-                              onClick={() => handleCancelReservation(reservation.id)}
+                              onClick={() => handleCancelReservation(reservation)}
                               title="Zrušiť rezerváciu"
                             >
                               <X className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -1198,18 +1208,18 @@ const AdminDashboard = () => {
                 <Button
                   size="sm"
                   className="bg-blue-500/80 hover:bg-blue-500 text-white gap-1 sm:gap-2 text-xs sm:text-sm w-full sm:w-auto"
-                  disabled={selectedDate < localDateStr(new Date()) || timeSlots.length > 0}
+                  disabled={selectedDate < localDateStr(new Date())}
                   onClick={async () => {
                     if (!currentBarberId) return;
-                    if (!confirm("Vytvoriť neaktívne sloty od 10:00 do 16:00 pre tento deň?")) return;
+                    if (!confirm("Doplniť chýbajúce sloty od 10:00 do 16:00 pre tento deň? Existujúce sloty a rezervácie zostanú nezmenené.")) return;
                     try {
-                      const response = await generateInactiveTimeSlots(currentBarberId, {
+                      const response = await generateTimeSlots(currentBarberId, {
                         date: selectedDate,
                         startTime: "10:00",
                         endTime: "16:00",
                       });
                       if (response.success) {
-                        toast({ title: "Sloty vytvorené", description: "Neaktívne sloty 10:00–16:00 boli vytvorené." });
+                        toast({ title: "Sloty vytvorené", description: "Chýbajúce sloty 10:00–16:00 boli vytvorené ako aktívne, obed 13:00–14:00 ako neaktívny." });
                         fetchTimeSlots();
                       } else {
                         toast({ title: "Chyba", description: response.error?.message || "Nepodarilo sa vytvoriť sloty.", variant: "destructive" });

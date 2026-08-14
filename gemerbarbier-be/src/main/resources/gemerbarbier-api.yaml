@@ -88,7 +88,7 @@ paths:
   /admin/barbers/{barberId}/time-slots/generate:
     post:
       tags: [ TimeSlotAdmin ]
-      summary: Generate inactive time slots for a given time range
+      summary: Generate missing time slots for a given time range, existing ones stay untouched
       operationId: generateTimeSlots
       parameters:
         - $ref: '#/components/parameters/barberIdPath'
