@@ -43,4 +43,10 @@ public class Reservation {
   @Enumerated(EnumType.STRING)
   private ReservationStatus status;
 
+  /** Non-null once the e-mail reminder has been claimed — the reminder sweep skips such rows. */
+  private LocalDateTime reminderSentAt;
+
+  /** Non-null once the SMS reminder has been claimed — the reminder sweep skips such rows. */
+  private LocalDateTime smsReminderSentAt;
+
 }

@@ -19,6 +19,8 @@ public interface ReservationMapper {
   @Mapping(target = "endTime", ignore = true)
   @Mapping(target = "status", ignore = true)
   @Mapping(target = "id", ignore = true)
+  @Mapping(target = "reminderSentAt", ignore = true)
+  @Mapping(target = "smsReminderSentAt", ignore = true)
   Reservation toReservation(ReservationRequest request);
 
   ReservationRequest toReservationRequest(ReservationCreateRequestDto requestDto);

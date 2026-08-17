@@ -1,16 +1,8 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Star } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { getReviews, type Review } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
-
-interface Review {
-  name: string;
-  rating: number;
-  text: string;
-  date: string;
-  profilePhoto?: string;
-}
 
 const Reviews = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -25,8 +17,8 @@ const Reviews = () => {
 
   const fetchGoogleReviews = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('google-reviews');
-      
+      const { data, error } = await getReviews();
+
       if (error) {
         console.error('Error fetching Google reviews:', error);
         toast({

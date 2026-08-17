@@ -10,5 +10,38 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
+  task:
+    execution:
+      shutdown:
+        # Let an in-flight confirmation e-mail finish instead of dropping it on SIGTERM.
+        await-termination: true
+        await-termination-period: 10s
 jwt:
   secret: ${JWT_SECRET}
+gemerbarbier:
+  notifications:
+    connect-timeout: 5s
+    read-timeout: 10s
+    email:
+      # Defaults to off so local runs and any unconfigured environment log instead of sending.
+      enabled: ${EMAIL_ENABLED:false}
+      from: ${EMAIL_FROM:Gemerbarbier <rezervacie@gemerbarbier.sk>}
+      api-key: ${RESEND_API_KEY:}
+      base-url: ${RESEND_BASE_URL:https://api.resend.com}
+    sms:
+      enabled: ${SMS_ENABLED:false}
+      sender: ${SMS_SENDER:Gemerbarber}
+      api-key: ${GATEWAYAPI_API_KEY:}
+      base-url: ${GATEWAYAPI_BASE_URL:https://gatewayapi.com}
+    reminder:
+      initial-delay: PT1M
+      interval: PT15M
+      lead-hours: 24
+      min-lead-hours: 2
+      sms-hour: 7
+      batch-size: 50
+  google:
+    maps-api-key: ${GOOGLE_API_KEY:}
+    places-api-key: ${GOOGLE_API_KEY:}
+    place-id: ${GOOGLE_PLACE_ID:}
+    reviews-cache: PT6H

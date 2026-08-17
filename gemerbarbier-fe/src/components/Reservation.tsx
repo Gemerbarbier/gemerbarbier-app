@@ -166,35 +166,7 @@ const Reservation = () => {
     });
 
     if (response.success) {
-      // Get service and barber details for email (id may be number or string)
-      const selectedService = services.find(s => String(s.id) === String(formData.serviceId));
-      const selectedBarber = barbers.find(b => String(b.id) === String(formData.barberId));
-
-      // Send confirmation email (non-blocking)
-      try {
-        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-        await fetch(`${supabaseUrl}/functions/v1/send-reservation-email`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            customerName: formData.name,
-            customerEmail: formData.email,
-            customerPhone: formData.phone,
-            date: format(formData.date, "yyyy-MM-dd"),
-            time: formData.time,
-            serviceName: selectedService?.name || "Služba",
-            servicePrice: selectedService?.price || 0,
-            serviceDuration: selectedService?.duration || 30,
-            barberName: selectedBarber?.name || "Barber",
-          }),
-        });
-      } catch (emailError) {
-        console.error("Failed to send confirmation email:", emailError);
-        // Don't show error to user - reservation was still successful
-      }
-
+      // The backend sends the confirmation e-mail itself, once the reservation has committed.
       toast({
         title: "Rezervácia Prijatá!",
         description: "Potvrdenie vám bolo zaslané e-mailom.",

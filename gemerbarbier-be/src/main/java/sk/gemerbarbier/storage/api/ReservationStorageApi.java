@@ -16,4 +16,16 @@ public interface ReservationStorageApi {
   Reservation getById(Long reservationId);
 
   List<ServiceStatistic> getStatistics(LocalDateTime from, LocalDateTime to, Long barberId);
+
+  List<Reservation> getEmailRemindable(LocalDateTime from, LocalDateTime to, int limit);
+
+  List<Reservation> getSmsRemindable(LocalDateTime from, LocalDateTime to, int limit);
+
+  boolean claimEmailReminder(Long reservationId, LocalDateTime sentAt);
+
+  boolean claimSmsReminder(Long reservationId, LocalDateTime sentAt);
+
+  void releaseEmailReminder(Long reservationId);
+
+  void releaseSmsReminder(Long reservationId);
 }

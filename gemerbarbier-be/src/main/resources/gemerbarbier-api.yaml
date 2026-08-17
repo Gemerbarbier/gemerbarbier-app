@@ -208,6 +208,30 @@ paths:
       responses:
         201:
           description: Created
+  /maps-config:
+    get:
+      tags: [ Maps ]
+      summary: Google Maps configuration for the browser
+      operationId: getMapsConfig
+      responses:
+        200:
+          description: Maps configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MapsConfigResponse'
+  /reviews:
+    get:
+      tags: [ Review ]
+      summary: Google reviews for the shop
+      operationId: getReviews
+      responses:
+        200:
+          description: Reviews
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewsResponse'
   /admin/reservations/{reservationId}/cancel:
     patch:
       tags: [ ReservationAdmin ]
@@ -475,4 +499,38 @@ components:
         endTime:
           type: string
         status:
+          type: string
+    MapsConfigResponse:
+      type: object
+      properties:
+        apiKey:
+          type: string
+        placeId:
+          type: string
+    ReviewsResponse:
+      type: object
+      properties:
+        reviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReviewResponse'
+        averageRating:
+          type: number
+          format: double
+        totalReviews:
+          type: integer
+          format: int32
+    ReviewResponse:
+      type: object
+      properties:
+        name:
+          type: string
+        rating:
+          type: integer
+          format: int32
+        text:
+          type: string
+        date:
+          type: string
+        profilePhoto:
           type: string

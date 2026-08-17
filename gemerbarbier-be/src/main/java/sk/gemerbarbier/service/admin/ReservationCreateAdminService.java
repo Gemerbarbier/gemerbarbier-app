@@ -13,6 +13,7 @@ import sk.gemerbarbier.entity.TimeSlotStatus;
 import sk.gemerbarbier.mapper.ReservationMapper;
 import sk.gemerbarbier.service.ReservationTimeValidator;
 import sk.gemerbarbier.service.api.admin.ReservationCreateAdminApi;
+import sk.gemerbarbier.service.notification.ReminderWindow;
 import sk.gemerbarbier.storage.api.BarberStorageApi;
 import sk.gemerbarbier.storage.api.CutServiceStorageApi;
 import sk.gemerbarbier.storage.api.ReservationStorageApi;
@@ -26,6 +27,7 @@ public class ReservationCreateAdminService implements ReservationCreateAdminApi 
   private final CutServiceStorageApi cutServiceStorage;
   private final BarberStorageApi barberStorage;
   private final TimeSlotStorageApi timeSlotStorage;
+  private final ReminderWindow reminderWindow;
 
   @Override
   @Transactional
@@ -70,6 +72,10 @@ public class ReservationCreateAdminService implements ReservationCreateAdminApi 
     reservation.setBarber(barber);
     reservation.setStatus(ReservationStatus.CREATED);
     reservation.setEndTime(end);
+    // No confirmation e-mail from the admin path — admins also record walk-ins and past visits,
+    // and an unexpected "your booking is confirmed" is worse than none. Future bookings still get
+    // their reminders from the sweep.
+    reminderWindow.suppressUnreachableReminders(reservation, reminderWindow.now());
     reservationStorage.createReservation(reservation);
 
     if (!slots.isEmpty()) {

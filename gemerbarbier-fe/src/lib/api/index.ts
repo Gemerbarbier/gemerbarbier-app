@@ -89,12 +89,23 @@ export {
   type RevenueResponse,
 } from './stats-api';
 
+// Content API (maps config, Google reviews)
+export {
+  contentApi,
+  getMapsConfig,
+  getReviews,
+  type MapsConfig,
+  type Review,
+  type ReviewsResponse,
+} from './content-api';
+
 import { authApi as authApiClient } from './auth-api';
 import { barbersApi as barbersApiClient } from './barbers-api';
 import { servicesApi as servicesApiClient } from './services-api';
 import { timeSlotsApi as timeSlotsApiClient } from './time-slots-api';
 import { reservationsApi as reservationsApiClient } from './reservations-api';
 import { statsApi as statsApiClient } from './stats-api';
+import { contentApi as contentApiClient } from './content-api';
 
 // Combined API object for convenience
 export const api = {
@@ -104,4 +115,5 @@ export const api = {
   timeSlots: timeSlotsApiClient,
   reservations: reservationsApiClient,
   stats: statsApiClient,
+  content: contentApiClient,
 };

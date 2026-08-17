@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { getMapsConfig } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { MapPin } from "lucide-react";
 
@@ -17,10 +17,10 @@ const GoogleMap = () => {
   useEffect(() => {
     const initMap = async () => {
       try {
-        // Fetch maps configuration from edge function
-        const { data, error: configError } = await supabase.functions.invoke('get-maps-config');
-        
-        if (configError) throw configError;
+        // Fetch maps configuration from the backend
+        const { data, error: configError } = await getMapsConfig();
+
+        if (configError) throw new Error(configError.message);
         if (!data?.apiKey || !data?.placeId) {
           throw new Error('Maps configuration not available');
         }

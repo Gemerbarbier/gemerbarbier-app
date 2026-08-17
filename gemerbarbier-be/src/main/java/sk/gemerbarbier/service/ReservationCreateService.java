@@ -1,15 +1,18 @@
 package sk.gemerbarbier.service;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import lombok.AllArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import sk.gemerbarbier.domain.event.ReservationCreatedEvent;
 import sk.gemerbarbier.domain.request.ReservationRequest;
 import sk.gemerbarbier.entity.ReservationStatus;
 import sk.gemerbarbier.entity.TimeSlotStatus;
 import sk.gemerbarbier.mapper.ReservationMapper;
+import sk.gemerbarbier.mapper.ReservationNotificationMapper;
 import sk.gemerbarbier.service.api.ReservationCreateApi;
+import sk.gemerbarbier.service.notification.ReminderWindow;
 import sk.gemerbarbier.storage.api.BarberStorageApi;
 import sk.gemerbarbier.storage.api.CutServiceStorageApi;
 import sk.gemerbarbier.storage.api.ReservationStorageApi;
@@ -27,6 +30,8 @@ public class ReservationCreateService implements ReservationCreateApi {
   private final CutServiceStorageApi cutServiceStorage;
   private final BarberStorageApi barberStorage;
   private final TimeSlotStorageApi timeSlotStorage;
+  private final ReminderWindow reminderWindow;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   @Transactional
@@ -39,7 +44,9 @@ public class ReservationCreateService implements ReservationCreateApi {
 
     ReservationTimeValidator.validateOnSlotGrid(start);
 
-    if (!start.isAfter(LocalDateTime.now(ZoneId.of("Europe/Bratislava")))) {
+    var now = reminderWindow.now();
+
+    if (!start.isAfter(now)) {
       throw new IllegalStateException(
           "Tento termín už uplynul. Vyberte prosím neskorší čas.");
     }
@@ -79,7 +86,15 @@ public class ReservationCreateService implements ReservationCreateApi {
     reservation.setBarber(barberStorage.getBarberById(request.barberId()));
     reservation.setStatus(ReservationStatus.CREATED);
     reservation.setEndTime(end);
+    reminderWindow.suppressUnreachableReminders(reservation, now);
     reservationStorage.createReservation(reservation);
     timeSlotStorage.saveAll(slots);
+
+    if (StringUtils.hasText(reservation.getCustomerEmail())) {
+      // Mapped here, while the entity is still attached — the listener runs on another thread once
+      // the transaction has committed and must not touch a managed entity.
+      eventPublisher.publishEvent(new ReservationCreatedEvent(reservation.getId(),
+          ReservationNotificationMapper.INSTANCE.toPayload(reservation)));
+    }
   }
 }
