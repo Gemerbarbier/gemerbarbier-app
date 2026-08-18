@@ -45,6 +45,12 @@ const Reservation = () => {
     barberId: "",
     note: "",
   });
+  const [phoneTouched, setPhoneTouched] = useState(false);
+
+  // formData.phone holds only the national number (after the fixed +421 prefix), grouped as
+  // "9xx xxx xxx" for readability.
+  const isPhoneValid = /^9\d{8}$/.test(formData.phone.replace(/\s/g, ""));
+  const showPhoneError = phoneTouched && formData.phone.length > 0 && !isPhoneValid;
 
   // Fetch barbers on mount
   useEffect(() => {
@@ -151,6 +157,16 @@ const Reservation = () => {
       return;
     }
 
+    if (!isPhoneValid) {
+      setPhoneTouched(true);
+      toast({
+        title: "Neplatné telefónne číslo",
+        description: "Zadajte platné slovenské mobilné číslo v tvare 9xx xxx xxx.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     const startTime = `${format(formData.date, "yyyy-MM-dd")}T${formData.time}:00`;
@@ -158,7 +174,7 @@ const Reservation = () => {
     const response = await createReservation({
       customerName: formData.name,
       customerEmail: formData.email,
-      customerPhone: formData.phone,
+      customerPhone: `+421 ${formData.phone}`,
       barberId: parseInt(formData.barberId),
       serviceId: parseInt(formData.serviceId),
       startTime,
@@ -182,6 +198,7 @@ const Reservation = () => {
         barberId: "",
         note: "",
       });
+      setPhoneTouched(false);
     } else {
       toast({
         title: "Chyba",
@@ -198,6 +215,24 @@ const Reservation = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let digits = e.target.value.replace(/\D/g, "");
+
+    // A customer typing the full domestic form (e.g. "0940 123 456") shouldn't have to also
+    // delete the leading 0 themselves — the +421 prefix is already shown beside the field.
+    if (digits.startsWith("0")) {
+      digits = digits.slice(1);
+    }
+    digits = digits.slice(0, 9);
+
+    const grouped = [digits.slice(0, 3), digits.slice(3, 6), digits.slice(6, 9)]
+      .filter(Boolean)
+      .join(" ");
+
+    setPhoneTouched(true);
+    setFormData({ ...formData, phone: grouped });
   };
 
   const handleDateSelect = (date: Date | undefined) => {
@@ -284,18 +319,35 @@ const Reservation = () => {
 
             <div className="space-y-2">
               <Label htmlFor="phone">Telefónne Číslo *</Label>
-              <Input
-                id="phone"
-                name="phone"
-                type="tel"
-                placeholder="+421 900 000 000"
-                value={formData.phone}
-                onChange={handleChange}
-                required
-                minLength={6}
-                maxLength={32}
-                className="bg-background border-border focus:border-accent"
-              />
+              {showPhoneError && (
+                <p className="text-sm font-medium text-destructive">
+                  Zadajte platné slovenské mobilné číslo v tvare 9xx xxx xxx.
+                </p>
+              )}
+              <div className="flex gap-2">
+                <span
+                  aria-hidden="true"
+                  className="flex h-10 select-none items-center rounded-md border border-border bg-muted px-3 text-sm text-muted-foreground"
+                >
+                  +421
+                </span>
+                <Input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  inputMode="numeric"
+                  placeholder="9xx xxx xxx"
+                  value={formData.phone}
+                  onChange={handlePhoneChange}
+                  onBlur={() => setPhoneTouched(true)}
+                  required
+                  aria-invalid={showPhoneError}
+                  className={cn(
+                    "bg-background border-border focus:border-accent",
+                    showPhoneError && "border-destructive focus:border-destructive"
+                  )}
+                />
+              </div>
             </div>
 
             {/* Barber Selection */}
