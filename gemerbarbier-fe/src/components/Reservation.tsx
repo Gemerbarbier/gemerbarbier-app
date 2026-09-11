@@ -220,6 +220,16 @@ const Reservation = () => {
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let digits = e.target.value.replace(/\D/g, "");
 
+    // Browser autofill (or a pasted number) often includes the country code, e.g.
+    // "00421 900 000 000" or "421900000000" — strip it down to the bare national number,
+    // same as we already do for a typed leading trunk "0".
+    if (digits.startsWith("00")) {
+      digits = digits.slice(2);
+    }
+    if (digits.startsWith("421")) {
+      digits = digits.slice(3);
+    }
+
     // A customer typing the full domestic form (e.g. "0940 123 456") shouldn't have to also
     // delete the leading 0 themselves — the +421 prefix is already shown beside the field.
     if (digits.startsWith("0")) {
@@ -335,6 +345,7 @@ const Reservation = () => {
                   id="phone"
                   name="phone"
                   type="tel"
+                  autoComplete="tel-national"
                   inputMode="numeric"
                   placeholder="9xx xxx xxx"
                   value={formData.phone}
