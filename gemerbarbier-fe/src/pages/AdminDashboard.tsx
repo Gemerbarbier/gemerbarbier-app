@@ -117,7 +117,7 @@ const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [reservations, setReservations] = useState<ReservationAdmin[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlotAdmin[]>([]);
-  const [showFreeSlots, setShowFreeSlots] = useState(false);
+  const [showFreeSlots, setShowFreeSlots] = useState(true);
   const [isLoadingReservations, setIsLoadingReservations] = useState(false);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const _now = new Date();
@@ -869,226 +869,228 @@ const AdminDashboard = () => {
               <h2 className="text-base sm:text-xl font-semibold">
                 Rezervácie na {new Date(selectedDate).toLocaleDateString("sk-SK")}
               </h2>
-              <div className="flex items-center gap-2">
-                <Switch
-                  id="show-free-slots"
-                  checked={showFreeSlots}
-                  onCheckedChange={setShowFreeSlots}
-                />
-                <Label htmlFor="show-free-slots" className="text-xs sm:text-sm text-muted-foreground cursor-pointer">
-                  Zobraziť voľné termíny
-                </Label>
-              </div>
-              <Dialog open={isAddReservationOpen} onOpenChange={(open) => {
-                setIsAddReservationOpen(open);
-                if (open) {
-                  fetchServicesForForm();
-                  const dateParts = selectedDate.split('-');
-                  const formattedDate = `${dateParts[2]}.${dateParts[1]}.${dateParts[0]}`;
-                  setNewReservation(prev => ({ ...prev, date: formattedDate }));
-                }
-              }}>
-                <DialogTrigger asChild>
-                  <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/80 gap-1 sm:gap-2 text-xs sm:text-sm w-full sm:w-auto" disabled={selectedDate < localDateStr(new Date())}>
-                    <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Nová rezervácia
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="bg-card max-h-[90vh] overflow-y-auto max-w-[95vw] sm:max-w-lg">
-                  <DialogHeader>
-                    <DialogTitle className="text-base sm:text-lg">Vytvoriť novú rezerváciu</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-3 sm:space-y-4">
-                    {/* Customer Name - required */}
-                    <div>
-                      <Label>Meno zákazníka *</Label>
-                      <Input
-                        value={newReservation.customerName}
-                        onChange={(e) => setNewReservation({ ...newReservation, customerName: e.target.value })}
-                        placeholder="Celé meno"
-                        required
-                      />
-                    </div>
-                    {/* Customer Email & Phone - optional */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="show-free-slots"
+                    checked={showFreeSlots}
+                    onCheckedChange={setShowFreeSlots}
+                  />
+                  <Label htmlFor="show-free-slots" className="text-xs sm:text-sm text-muted-foreground cursor-pointer whitespace-nowrap">
+                    Zobraziť voľné termíny
+                  </Label>
+                </div>
+                <Dialog open={isAddReservationOpen} onOpenChange={(open) => {
+                  setIsAddReservationOpen(open);
+                  if (open) {
+                    fetchServicesForForm();
+                    const dateParts = selectedDate.split('-');
+                    const formattedDate = `${dateParts[2]}.${dateParts[1]}.${dateParts[0]}`;
+                    setNewReservation(prev => ({ ...prev, date: formattedDate }));
+                  }
+                }}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/80 gap-1 sm:gap-2 text-xs sm:text-sm w-full sm:w-auto" disabled={selectedDate < localDateStr(new Date())}>
+                      <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                      Nová rezervácia
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="bg-card max-h-[90vh] overflow-y-auto max-w-[95vw] sm:max-w-lg">
+                    <DialogHeader>
+                      <DialogTitle className="text-base sm:text-lg">Vytvoriť novú rezerváciu</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-3 sm:space-y-4">
+                      {/* Customer Name - required */}
                       <div>
-                        <Label>E-mail</Label>
+                        <Label>Meno zákazníka *</Label>
                         <Input
-                          type="email"
-                          value={newReservation.customerEmail}
-                          onChange={(e) => setNewReservation({ ...newReservation, customerEmail: e.target.value })}
-                          placeholder="Voliteľné"
+                          value={newReservation.customerName}
+                          onChange={(e) => setNewReservation({ ...newReservation, customerName: e.target.value })}
+                          placeholder="Celé meno"
+                          required
                         />
                       </div>
-                      <div>
-                        <Label>Telefón</Label>
-                        <Input
-                          type="tel"
-                          value={newReservation.customerPhone}
-                          onChange={(e) => setNewReservation({ ...newReservation, customerPhone: e.target.value })}
-                          placeholder="Voliteľné"
-                        />
-                      </div>
-                    </div>
-                    {/* Service selection - fetched from API */}
-                    <div>
-                      <Label>Služba *</Label>
-                      <Select
-                        value={newReservation.serviceId}
-                        onValueChange={(value) => setNewReservation({ ...newReservation, serviceId: value, time: "", timeFrom: "08:00", timeTo: "18:00" })}
-                        disabled={isLoadingServices}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={isLoadingServices ? "Načítavam..." : "Vyberte službu"} />
-                        </SelectTrigger>
-                        <SelectContent className="bg-card">
-                          <SelectItem value="DOVOLENKA">Dovolenka</SelectItem>
-                          {services.map((service) => (
-                            <SelectItem key={service.id} value={service.id}>
-                              {service.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    {/* Date & Time - based on available slots */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                      <div>
-                        <Label>Dátum *</Label>
-                        <div className="flex gap-2">
+                      {/* Customer Email & Phone - optional */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        <div>
+                          <Label>E-mail</Label>
                           <Input
-                            type="text"
-                            placeholder="DD.MM.yyyy"
-                            value={newReservation.date}
-                            disabled={!newReservation.serviceId}
-                            onChange={(e) => {
-                              let value = e.target.value.replace(/[^\d.]/g, '');
-                              if (value.length === 2 && !value.includes('.')) {
-                                value = value + '.';
-                              } else if (value.length === 5 && value.split('.').length === 2) {
-                                value = value + '.';
-                              }
-                              if (value.length <= 10) {
-                                setNewReservation({ ...newReservation, date: value, time: "" });
-                              }
-                            }}
-                            className="flex-1"
+                            type="email"
+                            value={newReservation.customerEmail}
+                            onChange={(e) => setNewReservation({ ...newReservation, customerEmail: e.target.value })}
+                            placeholder="Voliteľné"
                           />
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button variant="outline" size="icon" disabled={!newReservation.serviceId}>
-                                <CalendarIcon className="w-4 h-4" />
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="end">
-                              <CalendarComponent
-                                mode="single"
-                                selected={(() => {
-                                  const parts = newReservation.date.split('.');
-                                  if (parts.length === 3 && parts[0].length === 2 && parts[1].length === 2 && parts[2].length === 4) {
-                                    return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-                                  }
-                                  return undefined;
-                                })()}
-                                onSelect={(date) => {
-                                  if (date) {
-                                    const day = String(date.getDate()).padStart(2, '0');
-                                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                                    const year = date.getFullYear();
-                                    setNewReservation({ ...newReservation, date: `${day}.${month}.${year}`, time: "" });
-                                  }
-                                }}
-                                disabled={(date) => {
-                                  const today = new Date();
-                                  today.setHours(0, 0, 0, 0);
-                                  return date < today;
-                                }}
-                                className={cn("p-3 pointer-events-auto")}
-                              />
-                            </PopoverContent>
-                          </Popover>
+                        </div>
+                        <div>
+                          <Label>Telefón</Label>
+                          <Input
+                            type="tel"
+                            value={newReservation.customerPhone}
+                            onChange={(e) => setNewReservation({ ...newReservation, customerPhone: e.target.value })}
+                            placeholder="Voliteľné"
+                          />
                         </div>
                       </div>
-                      {newReservation.serviceId === "DOVOLENKA" ? (
-                        <div className="space-y-2">
-                          <div className="grid grid-cols-2 gap-2">
-                            <div>
-                              <Label>Čas od *</Label>
-                              <Input
-                                type="time"
-                                value={newReservation.timeFrom}
-                                onChange={(e) => setNewReservation({ ...newReservation, timeFrom: e.target.value })}
-                              />
+                      {/* Service selection - fetched from API */}
+                      <div>
+                        <Label>Služba *</Label>
+                        <Select
+                          value={newReservation.serviceId}
+                          onValueChange={(value) => setNewReservation({ ...newReservation, serviceId: value, time: "", timeFrom: "08:00", timeTo: "18:00" })}
+                          disabled={isLoadingServices}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder={isLoadingServices ? "Načítavam..." : "Vyberte službu"} />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card">
+                            <SelectItem value="DOVOLENKA">Dovolenka</SelectItem>
+                            {services.map((service) => (
+                              <SelectItem key={service.id} value={service.id}>
+                                {service.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {/* Date & Time - based on available slots */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        <div>
+                          <Label>Dátum *</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              type="text"
+                              placeholder="DD.MM.yyyy"
+                              value={newReservation.date}
+                              disabled={!newReservation.serviceId}
+                              onChange={(e) => {
+                                let value = e.target.value.replace(/[^\d.]/g, '');
+                                if (value.length === 2 && !value.includes('.')) {
+                                  value = value + '.';
+                                } else if (value.length === 5 && value.split('.').length === 2) {
+                                  value = value + '.';
+                                }
+                                if (value.length <= 10) {
+                                  setNewReservation({ ...newReservation, date: value, time: "" });
+                                }
+                              }}
+                              className="flex-1"
+                            />
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button variant="outline" size="icon" disabled={!newReservation.serviceId}>
+                                  <CalendarIcon className="w-4 h-4" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="end">
+                                <CalendarComponent
+                                  mode="single"
+                                  selected={(() => {
+                                    const parts = newReservation.date.split('.');
+                                    if (parts.length === 3 && parts[0].length === 2 && parts[1].length === 2 && parts[2].length === 4) {
+                                      return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+                                    }
+                                    return undefined;
+                                  })()}
+                                  onSelect={(date) => {
+                                    if (date) {
+                                      const day = String(date.getDate()).padStart(2, '0');
+                                      const month = String(date.getMonth() + 1).padStart(2, '0');
+                                      const year = date.getFullYear();
+                                      setNewReservation({ ...newReservation, date: `${day}.${month}.${year}`, time: "" });
+                                    }
+                                  }}
+                                  disabled={(date) => {
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    return date < today;
+                                  }}
+                                  className={cn("p-3 pointer-events-auto")}
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                        </div>
+                        {newReservation.serviceId === "DOVOLENKA" ? (
+                          <div className="space-y-2">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <Label>Čas od *</Label>
+                                <Input
+                                  type="time"
+                                  value={newReservation.timeFrom}
+                                  onChange={(e) => setNewReservation({ ...newReservation, timeFrom: e.target.value })}
+                                />
+                              </div>
+                              <div>
+                                <Label>Čas do *</Label>
+                                <Input
+                                  type="time"
+                                  value={newReservation.timeTo}
+                                  onChange={(e) => setNewReservation({ ...newReservation, timeTo: e.target.value })}
+                                />
+                              </div>
                             </div>
                             <div>
-                              <Label>Čas do *</Label>
-                              <Input
-                                type="time"
-                                value={newReservation.timeTo}
-                                onChange={(e) => setNewReservation({ ...newReservation, timeTo: e.target.value })}
-                              />
+                              <Label>Dĺžka slotu *</Label>
+                              <Select
+                                value={newReservation.slotDuration}
+                                onValueChange={(value) => setNewReservation({ ...newReservation, slotDuration: value })}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="bg-card">
+                                  <SelectItem value="20">20 minút</SelectItem>
+                                  <SelectItem value="40">40 minút</SelectItem>
+                                  <SelectItem value="60">60 minút</SelectItem>
+                                </SelectContent>
+                              </Select>
                             </div>
                           </div>
+                        ) : (
                           <div>
-                            <Label>Dĺžka slotu *</Label>
+                            <Label>Čas *</Label>
                             <Select
-                              value={newReservation.slotDuration}
-                              onValueChange={(value) => setNewReservation({ ...newReservation, slotDuration: value })}
+                              value={newReservation.time}
+                              onValueChange={(value) => setNewReservation({ ...newReservation, time: value })}
+                              disabled={!newReservation.serviceId || isLoadingAdminFormSlots || availableAdminTimes.length === 0}
                             >
                               <SelectTrigger>
-                                <SelectValue />
+                                <SelectValue placeholder={
+                                  !newReservation.serviceId ? "Najprv vyberte službu" :
+                                  isLoadingAdminFormSlots ? "Načítavam..." :
+                                  availableAdminTimes.length === 0 ? "Žiadne dostupné časy" :
+                                  "Vyberte čas"
+                                } />
                               </SelectTrigger>
-                              <SelectContent className="bg-card">
-                                <SelectItem value="20">20 minút</SelectItem>
-                                <SelectItem value="40">40 minút</SelectItem>
-                                <SelectItem value="60">60 minút</SelectItem>
+                              <SelectContent className="bg-card max-h-60">
+                                {availableAdminTimes.map((time) => (
+                                  <SelectItem key={time} value={time}>{time}</SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                           </div>
-                        </div>
-                      ) : (
-                        <div>
-                          <Label>Čas *</Label>
-                          <Select
-                            value={newReservation.time}
-                            onValueChange={(value) => setNewReservation({ ...newReservation, time: value })}
-                            disabled={!newReservation.serviceId || isLoadingAdminFormSlots || availableAdminTimes.length === 0}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder={
-                                !newReservation.serviceId ? "Najprv vyberte službu" :
-                                isLoadingAdminFormSlots ? "Načítavam..." :
-                                availableAdminTimes.length === 0 ? "Žiadne dostupné časy" :
-                                "Vyberte čas"
-                              } />
-                            </SelectTrigger>
-                            <SelectContent className="bg-card max-h-60">
-                              {availableAdminTimes.map((time) => (
-                                <SelectItem key={time} value={time}>{time}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
+                        )}
+                      </div>
+                      <div>
+                        <Label>Poznámka</Label>
+                        <Input
+                          value={newReservation.note}
+                          onChange={(e) => setNewReservation({ ...newReservation, note: e.target.value })}
+                          placeholder="Voliteľná poznámka..."
+                        />
+                      </div>
+                      <Button
+                        className="w-full bg-accent text-accent-foreground hover:bg-accent/80"
+                        onClick={handleAddReservation}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Vytvoriť rezerváciu
+                      </Button>
                     </div>
-                    <div>
-                      <Label>Poznámka</Label>
-                      <Input
-                        value={newReservation.note}
-                        onChange={(e) => setNewReservation({ ...newReservation, note: e.target.value })}
-                        placeholder="Voliteľná poznámka..."
-                      />
-                    </div>
-                    <Button
-                      className="w-full bg-accent text-accent-foreground hover:bg-accent/80"
-                      onClick={handleAddReservation}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Vytvoriť rezerváciu
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
 
             {isLoadingReservations ? (
