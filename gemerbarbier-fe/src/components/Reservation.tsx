@@ -125,6 +125,13 @@ const Reservation = () => {
   // Derive available dates and times from slots
   const availableDates = new Set(availableSlots.map(s => s.date));
 
+  // Earliest date with a free slot, so the calendar opens straight on the month that actually
+  // has availability instead of an empty current month. Sundays are excluded defensively even
+  // though the backend shouldn't return them (the calendar itself also disables them below).
+  const firstAvailableDate = [...availableDates]
+    .sort()
+    .find(dateStr => new Date(`${dateStr}T00:00:00`).getDay() !== 0);
+
   const isToday = (date: Date) => {
     const today = new Date();
     return (
@@ -447,6 +454,10 @@ const Reservation = () => {
                     <Calendar
                       mode="single"
                       selected={formData.date}
+                      defaultMonth={
+                        formData.date
+                          ?? (firstAvailableDate ? new Date(`${firstAvailableDate}T00:00:00`) : undefined)
+                      }
                       onSelect={handleDateSelect}
                       disabled={(date) => {
                         const dateStr = format(date, "yyyy-MM-dd");

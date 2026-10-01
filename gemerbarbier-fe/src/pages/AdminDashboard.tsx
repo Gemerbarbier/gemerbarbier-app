@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +45,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import {
   getAdminTimeSlots,
@@ -80,6 +81,20 @@ for (let totalMin = 8 * 60; totalMin < 18 * 60; totalMin += 20) {
   ADMIN_SLOT_TIMES.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
 }
 
+const SLOT_DURATION_MINUTES = 20;
+
+const addMinutes = (hhmm: string, minutes: number) => {
+  const [h, m] = hhmm.split(':').map(Number);
+  const total = h * 60 + m + minutes;
+  return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+};
+
+interface PlaceholderSlot {
+  id: string;
+  startTime: string;
+  endTime: string;
+}
+
 // Service color and icon mapping
 const SERVICE_CONFIG_LIST: Array<{ match: string; bg: string; border: string; text: string; icon: React.ElementType }> = [
   { match: "exclusive strih & úprava brady", bg: "bg-violet-500/20", border: "border-violet-500/40", text: "text-violet-400", icon: Sparkles },
@@ -102,6 +117,7 @@ const AdminDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [reservations, setReservations] = useState<ReservationAdmin[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlotAdmin[]>([]);
+  const [showFreeSlots, setShowFreeSlots] = useState(false);
   const [isLoadingReservations, setIsLoadingReservations] = useState(false);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const _now = new Date();
@@ -619,6 +635,48 @@ const AdminDashboard = () => {
   // Filter only active (non-cancelled) reservations for display
   const activeReservations = reservations.filter((r) => r.status !== 'CANCELLED');
 
+  // Free time — contiguous runs of ACTIVE slots merged into single blocks. A slot's status is
+  // the source of truth for "free": the backend flips it to RESERVED the moment a reservation is
+  // created and back to ACTIVE the moment one is cancelled, so no cross-check against
+  // `reservations` is needed here.
+  const placeholderSlots: PlaceholderSlot[] = useMemo(() => {
+    const active = [...timeSlots]
+      .filter((s) => s.status === 'ACTIVE')
+      .sort((a, b) => formatTime(a.startTime).localeCompare(formatTime(b.startTime)));
+
+    const groups: TimeSlotAdmin[][] = [];
+    for (const slot of active) {
+      const currentGroup = groups.at(-1);
+      const lastSlot = currentGroup?.at(-1);
+      if (lastSlot && addMinutes(formatTime(lastSlot.startTime), SLOT_DURATION_MINUTES) === formatTime(slot.startTime)) {
+        currentGroup!.push(slot);
+      } else {
+        groups.push([slot]);
+      }
+    }
+
+    return groups.map((group) => ({
+      id: `placeholder-${group[0].id}`,
+      startTime: formatTime(group[0].startTime),
+      endTime: addMinutes(formatTime(group.at(-1)!.startTime), SLOT_DURATION_MINUTES),
+    }));
+  }, [timeSlots]);
+
+  type ReservationListItem =
+    | { kind: 'reservation'; startTime: string; reservation: ReservationAdmin }
+    | { kind: 'placeholder'; startTime: string; placeholder: PlaceholderSlot };
+
+  const reservationListItems: ReservationListItem[] = [
+    ...activeReservations.map((r): ReservationListItem => ({
+      kind: 'reservation', startTime: formatTime(r.startTime), reservation: r,
+    })),
+    ...(showFreeSlots
+      ? placeholderSlots.map((p): ReservationListItem => ({
+          kind: 'placeholder', startTime: p.startTime, placeholder: p,
+        }))
+      : []),
+  ].sort((a, b) => a.startTime.localeCompare(b.startTime));
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -811,6 +869,16 @@ const AdminDashboard = () => {
               <h2 className="text-base sm:text-xl font-semibold">
                 Rezervácie na {new Date(selectedDate).toLocaleDateString("sk-SK")}
               </h2>
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="show-free-slots"
+                  checked={showFreeSlots}
+                  onCheckedChange={setShowFreeSlots}
+                />
+                <Label htmlFor="show-free-slots" className="text-xs sm:text-sm text-muted-foreground cursor-pointer">
+                  Zobraziť voľné termíny
+                </Label>
+              </div>
               <Dialog open={isAddReservationOpen} onOpenChange={(open) => {
                 setIsAddReservationOpen(open);
                 if (open) {
@@ -1028,102 +1096,124 @@ const AdminDashboard = () => {
                 <Loader2 className="w-8 h-8 text-muted-foreground mx-auto mb-4 animate-spin" />
                 <p className="text-muted-foreground">Načítavam rezervácie...</p>
               </div>
-            ) : activeReservations.length === 0 ? (
+            ) : reservationListItems.length === 0 ? (
               <div className="bg-card border border-border rounded-lg p-8 text-center">
                 <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">Žiadne rezervácie na tento deň</p>
               </div>
             ) : (
               <div className="grid gap-4">
-                {activeReservations
-                  .sort((a, b) => a.startTime.localeCompare(b.startTime))
-                  .map((reservation) => {
-                    const serviceConfig = reservation.cutServiceName
-                      ? getServiceConfig(reservation.cutServiceName)
-                      : undefined;
-                    const IconComponent = serviceConfig?.icon || Scissors;
-
+                {reservationListItems.map((item) => {
+                  if (item.kind === 'placeholder') {
                     return (
                       <div
-                        key={reservation.id}
-                        id={`reservation-${reservation.id}`}
-                        className={cn(
-                          "bg-card border-l-4 rounded-lg p-4",
-                          serviceConfig?.border || "border-border",
-                          serviceConfig?.bg || ""
-                        )}
+                        key={item.placeholder.id}
+                        className="border-l-4 border-dashed border-muted-foreground/30 bg-muted/20 rounded-lg p-4"
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                              <div className={cn(
-                                "w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0",
-                                serviceConfig?.bg || "bg-accent/10"
-                              )}>
-                                <IconComponent className={cn(
-                                  "w-4 h-4 sm:w-5 sm:h-5",
-                                  serviceConfig?.text || "text-accent"
-                                )} />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <h3 className="font-semibold text-sm sm:text-base truncate">
-                                  {reservation.customerName}
-                                </h3>
-                                <div className="flex flex-wrap items-center gap-1 sm:gap-3">
-                                  <span className="text-sm sm:text-base font-bold text-accent">
-                                    {formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}
-                                  </span>
-                                  {reservation.cutServiceName && (
-                                    <span className={cn(
-                                      "text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full truncate max-w-[120px] sm:max-w-none",
-                                      serviceConfig?.bg || "bg-accent/20",
-                                      serviceConfig?.text || "text-accent"
-                                    )}>
-                                      {reservation.cutServiceName}
-                                    </span>
-                                  )}
-                                </div>
-                                {/* Additional details */}
-                                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1.5">
-                                  {reservation.customerPhone && (
-                                    <a
-                                      href={`tel:${reservation.customerPhone.startsWith("+") ? reservation.customerPhone.replace(/\s+/g, "") : `+${reservation.customerPhone.replace(/\s+/g, "")}`}`}
-                                      className="flex items-center gap-1 text-[11px] sm:text-xs text-muted-foreground hover:text-accent transition-colors"
-                                    >
-                                      <Phone className="w-3 h-3" />
-                                      {reservation.customerPhone.startsWith("+") ? reservation.customerPhone : `+${reservation.customerPhone}`}
-                                    </a>
-                                  )}
-                                  {reservation.customerEmail && (
-                                    <span className="flex items-center gap-1 text-[11px] sm:text-xs text-muted-foreground">
-                                      <Mail className="w-3 h-3" />
-                                      {reservation.customerEmail}
-                                    </span>
-                                  )}
-                                </div>
-                                {reservation.note && (
-                                  <p className="text-[11px] sm:text-xs text-muted-foreground mt-1 italic">
-                                    📝 {reservation.note}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-muted">
+                            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
                           </div>
-                          <div className="flex gap-1 sm:gap-2 flex-shrink-0">
-                            <Button
-                              variant="destructive"
-                              size="icon"
-                              className="h-8 w-8 sm:h-9 sm:w-9"
-                              onClick={() => handleCancelReservation(reservation)}
-                              title="Zrušiť rezerváciu"
-                            >
-                              <X className="w-3 h-3 sm:w-4 sm:h-4" />
-                            </Button>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-medium text-sm sm:text-base text-muted-foreground">
+                              Voľný termín
+                            </h3>
+                            <span className="text-sm sm:text-base font-bold text-muted-foreground">
+                              {item.placeholder.startTime} - {item.placeholder.endTime}
+                            </span>
                           </div>
                         </div>
                       </div>
                     );
-                  })}
+                  }
+
+                  const reservation = item.reservation;
+                  const serviceConfig = reservation.cutServiceName
+                    ? getServiceConfig(reservation.cutServiceName)
+                    : undefined;
+                  const IconComponent = serviceConfig?.icon || Scissors;
+
+                  return (
+                    <div
+                      key={reservation.id}
+                      id={`reservation-${reservation.id}`}
+                      className={cn(
+                        "bg-card border-l-4 rounded-lg p-4",
+                        serviceConfig?.border || "border-border",
+                        serviceConfig?.bg || ""
+                      )}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                            <div className={cn(
+                              "w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0",
+                              serviceConfig?.bg || "bg-accent/10"
+                            )}>
+                              <IconComponent className={cn(
+                                "w-4 h-4 sm:w-5 sm:h-5",
+                                serviceConfig?.text || "text-accent"
+                              )} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <h3 className="font-semibold text-sm sm:text-base truncate">
+                                {reservation.customerName}
+                              </h3>
+                              <div className="flex flex-wrap items-center gap-1 sm:gap-3">
+                                <span className="text-sm sm:text-base font-bold text-accent">
+                                  {formatTime(reservation.startTime)} - {formatTime(reservation.endTime)}
+                                </span>
+                                {reservation.cutServiceName && (
+                                  <span className={cn(
+                                    "text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full truncate max-w-[120px] sm:max-w-none",
+                                    serviceConfig?.bg || "bg-accent/20",
+                                    serviceConfig?.text || "text-accent"
+                                  )}>
+                                    {reservation.cutServiceName}
+                                  </span>
+                                )}
+                              </div>
+                              {/* Additional details */}
+                              <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1.5">
+                                {reservation.customerPhone && (
+                                  <a
+                                    href={`tel:${reservation.customerPhone.startsWith("+") ? reservation.customerPhone.replace(/\s+/g, "") : `+${reservation.customerPhone.replace(/\s+/g, "")}`}`}
+                                    className="flex items-center gap-1 text-[11px] sm:text-xs text-muted-foreground hover:text-accent transition-colors"
+                                  >
+                                    <Phone className="w-3 h-3" />
+                                    {reservation.customerPhone.startsWith("+") ? reservation.customerPhone : `+${reservation.customerPhone}`}
+                                  </a>
+                                )}
+                                {reservation.customerEmail && (
+                                  <span className="flex items-center gap-1 text-[11px] sm:text-xs text-muted-foreground">
+                                    <Mail className="w-3 h-3" />
+                                    {reservation.customerEmail}
+                                  </span>
+                                )}
+                              </div>
+                              {reservation.note && (
+                                <p className="text-[11px] sm:text-xs text-muted-foreground mt-1 italic">
+                                  📝 {reservation.note}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex gap-1 sm:gap-2 flex-shrink-0">
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="h-8 w-8 sm:h-9 sm:w-9"
+                            onClick={() => handleCancelReservation(reservation)}
+                            title="Zrušiť rezerváciu"
+                          >
+                            <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
