@@ -635,31 +635,19 @@ const AdminDashboard = () => {
   // Filter only active (non-cancelled) reservations for display
   const activeReservations = reservations.filter((r) => r.status !== 'CANCELLED');
 
-  // Free time — contiguous runs of ACTIVE slots merged into single blocks. A slot's status is
-  // the source of truth for "free": the backend flips it to RESERVED the moment a reservation is
-  // created and back to ACTIVE the moment one is cancelled, so no cross-check against
-  // `reservations` is needed here.
+  // Free time — one placeholder per 20-minute ACTIVE slot, shown individually rather than merged
+  // into bigger blocks. A slot's status is the source of truth for "free": the backend flips it to
+  // RESERVED the moment a reservation is created and back to ACTIVE the moment one is cancelled, so
+  // no cross-check against `reservations` is needed here.
   const placeholderSlots: PlaceholderSlot[] = useMemo(() => {
-    const active = [...timeSlots]
+    return [...timeSlots]
       .filter((s) => s.status === 'ACTIVE')
-      .sort((a, b) => formatTime(a.startTime).localeCompare(formatTime(b.startTime)));
-
-    const groups: TimeSlotAdmin[][] = [];
-    for (const slot of active) {
-      const currentGroup = groups.at(-1);
-      const lastSlot = currentGroup?.at(-1);
-      if (lastSlot && addMinutes(formatTime(lastSlot.startTime), SLOT_DURATION_MINUTES) === formatTime(slot.startTime)) {
-        currentGroup!.push(slot);
-      } else {
-        groups.push([slot]);
-      }
-    }
-
-    return groups.map((group) => ({
-      id: `placeholder-${group[0].id}`,
-      startTime: formatTime(group[0].startTime),
-      endTime: addMinutes(formatTime(group.at(-1)!.startTime), SLOT_DURATION_MINUTES),
-    }));
+      .sort((a, b) => formatTime(a.startTime).localeCompare(formatTime(b.startTime)))
+      .map((slot) => ({
+        id: `placeholder-${slot.id}`,
+        startTime: formatTime(slot.startTime),
+        endTime: addMinutes(formatTime(slot.startTime), SLOT_DURATION_MINUTES),
+      }));
   }, [timeSlots]);
 
   type ReservationListItem =
