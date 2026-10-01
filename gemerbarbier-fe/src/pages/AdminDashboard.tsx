@@ -95,6 +95,45 @@ interface PlaceholderSlot {
   endTime: string;
 }
 
+// Free time — one placeholder per 20-minute ACTIVE slot, shown individually rather than merged
+// into bigger blocks. A slot's status is the source of truth for "free": the backend flips it to
+// RESERVED the moment a reservation is created and back to ACTIVE the moment one is cancelled, so
+// no cross-check against reservations is needed here.
+const buildPlaceholderSlots = (slots: TimeSlotAdmin[]): PlaceholderSlot[] =>
+  [...slots]
+    .filter((s) => s.status === 'ACTIVE')
+    .sort((a, b) => formatTime(a.startTime).localeCompare(formatTime(b.startTime)))
+    .map((slot) => ({
+      id: `placeholder-${slot.id}`,
+      startTime: formatTime(slot.startTime),
+      endTime: addMinutes(formatTime(slot.startTime), SLOT_DURATION_MINUTES),
+    }));
+
+type ReservationListItem =
+  | { kind: 'reservation'; startTime: string; reservation: ReservationAdmin }
+  | { kind: 'placeholder'; startTime: string; placeholder: PlaceholderSlot };
+
+// Combines real reservations with free-slot placeholders into one chronologically sorted list.
+// Shared by the Rezervácie tab and the Kalendár tab so "free time" is built and looks the same
+// everywhere it's shown.
+const buildReservationListItems = (
+  reservations: ReservationAdmin[],
+  daySlots: TimeSlotAdmin[],
+  includeFreeSlots: boolean,
+): ReservationListItem[] => {
+  const items: ReservationListItem[] = reservations
+    .filter((r) => r.status !== 'CANCELLED')
+    .map((r) => ({ kind: 'reservation', startTime: formatTime(r.startTime), reservation: r }));
+
+  if (includeFreeSlots) {
+    items.push(...buildPlaceholderSlots(daySlots).map((p): ReservationListItem => ({
+      kind: 'placeholder', startTime: p.startTime, placeholder: p,
+    })));
+  }
+
+  return items.sort((a, b) => a.startTime.localeCompare(b.startTime));
+};
+
 // Service color and icon mapping
 const SERVICE_CONFIG_LIST: Array<{ match: string; bg: string; border: string; text: string; icon: React.ElementType }> = [
   { match: "exclusive strih & úprava brady", bg: "bg-violet-500/20", border: "border-violet-500/40", text: "text-violet-400", icon: Sparkles },
@@ -165,6 +204,7 @@ const AdminDashboard = () => {
   const [calendarView, setCalendarView] = useState<"week" | "month">("week");
   const [calendarRefDate, setCalendarRefDate] = useState<Date>(new Date());
   const [calendarData, setCalendarData] = useState<Record<string, ReservationAdmin[]>>({});
+  const [calendarTimeSlots, setCalendarTimeSlots] = useState<Record<string, TimeSlotAdmin[]>>({});
   const [isLoadingCalendar, setIsLoadingCalendar] = useState(false);
 
   const [isAddReservationOpen, setIsAddReservationOpen] = useState(false);
@@ -276,13 +316,22 @@ const AdminDashboard = () => {
         }
       }
       const results = await Promise.all(
-        dates.map((dt) => getAdminReservations(currentBarberId, dt).then((r) => ({ dt, r })))
+        dates.map(async (dt) => {
+          const [r, s] = await Promise.all([
+            getAdminReservations(currentBarberId, dt),
+            getAdminTimeSlots(currentBarberId, dt),
+          ]);
+          return { dt, r, s };
+        })
       );
       const map: Record<string, ReservationAdmin[]> = {};
-      for (const { dt, r } of results) {
+      const slotMap: Record<string, TimeSlotAdmin[]> = {};
+      for (const { dt, r, s } of results) {
         map[dt] = r.success && r.data ? r.data.filter((x) => x.status !== "CANCELLED") : [];
+        slotMap[dt] = s.success && s.data ? s.data : [];
       }
       setCalendarData(map);
+      setCalendarTimeSlots(slotMap);
     } finally {
       setIsLoadingCalendar(false);
     }
@@ -632,38 +681,10 @@ const AdminDashboard = () => {
     setWeekOffset(0);
   };
 
-  // Filter only active (non-cancelled) reservations for display
-  const activeReservations = reservations.filter((r) => r.status !== 'CANCELLED');
-
-  // Free time — one placeholder per 20-minute ACTIVE slot, shown individually rather than merged
-  // into bigger blocks. A slot's status is the source of truth for "free": the backend flips it to
-  // RESERVED the moment a reservation is created and back to ACTIVE the moment one is cancelled, so
-  // no cross-check against `reservations` is needed here.
-  const placeholderSlots: PlaceholderSlot[] = useMemo(() => {
-    return [...timeSlots]
-      .filter((s) => s.status === 'ACTIVE')
-      .sort((a, b) => formatTime(a.startTime).localeCompare(formatTime(b.startTime)))
-      .map((slot) => ({
-        id: `placeholder-${slot.id}`,
-        startTime: formatTime(slot.startTime),
-        endTime: addMinutes(formatTime(slot.startTime), SLOT_DURATION_MINUTES),
-      }));
-  }, [timeSlots]);
-
-  type ReservationListItem =
-    | { kind: 'reservation'; startTime: string; reservation: ReservationAdmin }
-    | { kind: 'placeholder'; startTime: string; placeholder: PlaceholderSlot };
-
-  const reservationListItems: ReservationListItem[] = [
-    ...activeReservations.map((r): ReservationListItem => ({
-      kind: 'reservation', startTime: formatTime(r.startTime), reservation: r,
-    })),
-    ...(showFreeSlots
-      ? placeholderSlots.map((p): ReservationListItem => ({
-          kind: 'placeholder', startTime: p.startTime, placeholder: p,
-        }))
-      : []),
-  ].sort((a, b) => a.startTime.localeCompare(b.startTime));
+  const reservationListItems: ReservationListItem[] = useMemo(
+    () => buildReservationListItems(reservations, timeSlots, showFreeSlots),
+    [reservations, timeSlots, showFreeSlots]
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -1757,7 +1778,7 @@ const AdminDashboard = () => {
               ) : calendarView === "week" ? (
                 <div className="grid grid-cols-1 md:grid-cols-7 gap-2 sm:gap-3">
                   {dates.map((dt, i) => {
-                    const list = (calendarData[dt] || []).slice().sort((a, b) => a.startTime.localeCompare(b.startTime));
+                    const list = buildReservationListItems(calendarData[dt] || [], calendarTimeSlots[dt] || [], showFreeSlots);
                     const d = new Date(dt + "T00:00:00");
                     const isToday = dt === todayStr;
                     const isWeekend = d.getDay() === 0 || d.getDay() === 6;
@@ -1781,7 +1802,22 @@ const AdminDashboard = () => {
                           {list.length === 0 ? (
                             <p className="text-[11px] text-muted-foreground italic">Bez rezervácií</p>
                           ) : (
-                            list.map((r) => {
+                            list.map((item) => {
+                              if (item.kind === 'placeholder') {
+                                return (
+                                  <div
+                                    key={item.placeholder.id}
+                                    className="w-full rounded px-2 py-1.5 border border-dashed border-muted-foreground/30 bg-muted/20"
+                                  >
+                                    <div className="flex items-center justify-between gap-1">
+                                      <span className="text-xs font-semibold text-muted-foreground">{item.placeholder.startTime}</span>
+                                      <span className="text-[10px] text-muted-foreground truncate">Voľný termín</span>
+                                    </div>
+                                  </div>
+                                );
+                              }
+
+                              const r = item.reservation;
                               const cfg = r.cutServiceName ? getServiceConfig(r.cutServiceName) : undefined;
                               return (
                                 <button
@@ -1825,7 +1861,7 @@ const AdminDashboard = () => {
                   <div className="grid grid-cols-7 gap-1">
                     {dates.map((dt) => {
                       const d = new Date(dt + "T00:00:00");
-                      const list = (calendarData[dt] || []).slice().sort((a, b) => a.startTime.localeCompare(b.startTime));
+                      const list = buildReservationListItems(calendarData[dt] || [], calendarTimeSlots[dt] || [], showFreeSlots);
                       const inMonth = d.getMonth() === ref.getMonth();
                       const isToday = dt === todayStr;
                       return (
@@ -1853,7 +1889,19 @@ const AdminDashboard = () => {
                             )}
                           </div>
                           <div className="space-y-0.5 flex-1 overflow-hidden">
-                            {list.slice(0, 3).map((r) => {
+                            {list.slice(0, 3).map((item) => {
+                              if (item.kind === 'placeholder') {
+                                return (
+                                  <div
+                                    key={item.placeholder.id}
+                                    className="text-[9px] sm:text-[10px] rounded px-1 py-0.5 truncate border border-dashed border-muted-foreground/30 bg-muted/20 text-muted-foreground"
+                                  >
+                                    {item.placeholder.startTime} Voľný termín
+                                  </div>
+                                );
+                              }
+
+                              const r = item.reservation;
                               const cfg = r.cutServiceName ? getServiceConfig(r.cutServiceName) : undefined;
                               return (
                                 <div
