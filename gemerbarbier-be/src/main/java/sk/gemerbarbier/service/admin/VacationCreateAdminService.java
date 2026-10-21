@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,10 +29,12 @@ public class VacationCreateAdminService implements VacationCreateAdminApi {
   @Transactional
   public void createVacation(
       Long barberId, LocalDate date, LocalTime startTime, LocalTime endTime,
-      int slotDurationMinutes) {
+      int slotDurationMinutes, String note) {
     var barber = barberStorageApi.getBarberById(barberId);
     var intervalFrom = date.atTime(startTime);
     var intervalTo = date.atTime(endTime);
+    var groupId = UUID.randomUUID().toString();
+    var trimmedNote = note == null || note.isBlank() ? null : note.trim();
 
     var current = intervalFrom;
     while (current.isBefore(intervalTo)) {
@@ -48,6 +51,8 @@ public class VacationCreateAdminService implements VacationCreateAdminApi {
       if (!alreadyTaken) {
         var reservation = Reservation.builder()
             .customerName("Dovolenka")
+            .note(trimmedNote)
+            .vacationGroupId(groupId)
             .barber(barber)
             .cutService(null)
             .startTime(current)

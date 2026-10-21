@@ -21,7 +21,8 @@ public class VacationAdminController implements VacationAdminApi {
         requestDto.getDate(),
         LocalTime.parse(requestDto.getStartTime()),
         LocalTime.parse(requestDto.getEndTime()),
-        requestDto.getSlotDurationMinutes()
+        requestDto.getSlotDurationMinutes(),
+        requestDto.getNote()
     );
     return ResponseEntity.status(201).build();
   }

@@ -27,6 +27,7 @@ export interface ReservationAdmin {
   customerPhone?: string;
   cutServiceName: string | null;
   note?: string;
+  vacationGroupId?: string; // shared by all slots created by one vacation request
   status: 'CREATED' | 'CANCELLED';
 }
 
@@ -46,6 +47,7 @@ export interface VacationCreateAdminRequest {
   startTime: string; // HH:mm
   endTime: string; // HH:mm
   slotDurationMinutes: number; // 20 | 40 | 60
+  note?: string;
 }
 
 export interface TimeSlotGenerateAdminRequest {

@@ -49,4 +49,7 @@ public class Reservation {
   /** Non-null once the SMS reminder has been claimed — the reminder sweep skips such rows. */
   private LocalDateTime smsReminderSentAt;
 
+  /** Shared by every reservation created by one vacation request; null for regular bookings. */
+  private String vacationGroupId;
+
 }

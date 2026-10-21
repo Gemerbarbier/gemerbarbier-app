@@ -23,6 +23,8 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  Palmtree,
   CalendarIcon,
   Sparkles,
   Flame,
@@ -109,13 +111,59 @@ const buildPlaceholderSlots = (slots: TimeSlotAdmin[]): PlaceholderSlot[] =>
       endTime: addMinutes(formatTime(slot.startTime), SLOT_DURATION_MINUTES),
     }));
 
+interface VacationGroup {
+  id: string;
+  startTime: string;
+  endTime: string;
+  note?: string;
+  reservations: ReservationAdmin[];
+}
+
 type ReservationListItem =
   | { kind: 'reservation'; startTime: string; reservation: ReservationAdmin }
+  | { kind: 'vacation'; startTime: string; vacation: VacationGroup }
   | { kind: 'placeholder'; startTime: string; placeholder: PlaceholderSlot };
 
-// Combines real reservations with free-slot placeholders into one chronologically sorted list.
-// Shared by the Rezervácie tab and the Kalendár tab so "free time" is built and looks the same
-// everywhere it's shown.
+// A vacation request is stored as one reservation per slot. Slots created by the same request
+// share a vacationGroupId; older vacations without one fall back to grouping by note.
+const vacationGroupKey = (r: ReservationAdmin) => r.vacationGroupId ?? `legacy:${r.note ?? ''}`;
+
+// Merges neighbouring slots of one vacation into a single 'vacation' item.
+const mergeVacationSlots = (items: ReservationListItem[]): ReservationListItem[] => {
+  const merged: ReservationListItem[] = [];
+  for (const item of items) {
+    if (item.kind !== 'reservation' || !isVacationReservation(item.reservation)) {
+      merged.push(item);
+      continue;
+    }
+    const r = item.reservation;
+    const prev = merged[merged.length - 1];
+    if (prev?.kind === 'vacation' && vacationGroupKey(prev.vacation.reservations[0]) === vacationGroupKey(r)) {
+      prev.vacation.reservations.push(r);
+      prev.vacation.endTime = formatTime(r.endTime);
+      continue;
+    }
+    merged.push({
+      kind: 'vacation',
+      startTime: item.startTime,
+      vacation: {
+        id: `vacation-${r.id}`,
+        startTime: item.startTime,
+        endTime: formatTime(r.endTime),
+        note: r.note,
+        reservations: [r],
+      },
+    });
+  }
+  return merged;
+};
+
+const slotCountLabel = (count: number) =>
+  `${count} ${count === 1 ? "slot" : count < 5 ? "sloty" : "slotov"}`;
+
+// Combines real reservations with free-slot placeholders into one chronologically sorted list,
+// with vacation slots merged into blocks. Shared by the Rezervácie tab and the Kalendár tab so
+// everything is built and looks the same everywhere it's shown.
 const buildReservationListItems = (
   reservations: ReservationAdmin[],
   daySlots: TimeSlotAdmin[],
@@ -131,7 +179,7 @@ const buildReservationListItems = (
     })));
   }
 
-  return items.sort((a, b) => a.startTime.localeCompare(b.startTime));
+  return mergeVacationSlots(items.sort((a, b) => a.startTime.localeCompare(b.startTime)));
 };
 
 // Service color and icon mapping
@@ -157,6 +205,7 @@ const AdminDashboard = () => {
   const [reservations, setReservations] = useState<ReservationAdmin[]>([]);
   const [timeSlots, setTimeSlots] = useState<TimeSlotAdmin[]>([]);
   const [showFreeSlots, setShowFreeSlots] = useState(true);
+  const [expandedVacations, setExpandedVacations] = useState<Set<string>>(new Set());
   const [isLoadingReservations, setIsLoadingReservations] = useState(false);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const _now = new Date();
@@ -502,6 +551,42 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleCancelVacation = async (vacation: VacationGroup) => {
+    const confirmed = await confirm({
+      title: "Zrušiť dovolenku?",
+      description: `${vacation.startTime} – ${vacation.endTime}${vacation.note ? ` · ${vacation.note}` : ""} (${slotCountLabel(vacation.reservations.length)}). Túto akciu nie je možné vrátiť.`,
+      confirmLabel: "Zrušiť dovolenku",
+      cancelLabel: "Ponechať",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
+
+    const responses = await Promise.all(vacation.reservations.map((r) => cancelAdminReservation(r.id)));
+    const failed = responses.find((r) => !r.success);
+    if (!failed) {
+      toast({
+        title: "Dovolenka zrušená",
+        description: "Dovolenka bola úspešne zrušená.",
+      });
+    } else {
+      toast({
+        title: "Chyba",
+        description: failed.error?.message || "Nepodarilo sa zrušiť celú dovolenku.",
+        variant: "destructive",
+      });
+    }
+    fetchReservations();
+  };
+
+  const toggleVacationExpanded = (id: string) => {
+    setExpandedVacations((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const handleAddReservation = async () => {
     const resetForm = () => setNewReservation({ date: "", time: "", timeFrom: "08:00", timeTo: "18:00", slotDuration: "20", serviceId: "", note: "", customerName: "", customerEmail: "", customerPhone: "" });
 
@@ -524,6 +609,7 @@ const AdminDashboard = () => {
         startTime: newReservation.timeFrom,
         endTime: newReservation.timeTo,
         slotDurationMinutes: parseInt(newReservation.slotDuration),
+        note: newReservation.note.trim() || undefined,
       });
       if (response.success) {
         resetForm();
@@ -909,37 +995,42 @@ const AdminDashboard = () => {
                       <DialogTitle className="text-base sm:text-lg">Vytvoriť novú rezerváciu</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-3 sm:space-y-4">
-                      {/* Customer Name - required */}
-                      <div>
-                        <Label>Meno zákazníka *</Label>
-                        <Input
-                          value={newReservation.customerName}
-                          onChange={(e) => setNewReservation({ ...newReservation, customerName: e.target.value })}
-                          placeholder="Celé meno"
-                          required
-                        />
-                      </div>
-                      {/* Customer Email & Phone - optional */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                        <div>
-                          <Label>E-mail</Label>
-                          <Input
-                            type="email"
-                            value={newReservation.customerEmail}
-                            onChange={(e) => setNewReservation({ ...newReservation, customerEmail: e.target.value })}
-                            placeholder="Voliteľné"
-                          />
-                        </div>
-                        <div>
-                          <Label>Telefón</Label>
-                          <Input
-                            type="tel"
-                            value={newReservation.customerPhone}
-                            onChange={(e) => setNewReservation({ ...newReservation, customerPhone: e.target.value })}
-                            placeholder="Voliteľné"
-                          />
-                        </div>
-                      </div>
+                      {/* Customer details are irrelevant for a vacation block */}
+                      {newReservation.serviceId !== "DOVOLENKA" && (
+                        <>
+                          {/* Customer Name - required */}
+                          <div>
+                            <Label>Meno zákazníka *</Label>
+                            <Input
+                              value={newReservation.customerName}
+                              onChange={(e) => setNewReservation({ ...newReservation, customerName: e.target.value })}
+                              placeholder="Celé meno"
+                              required
+                            />
+                          </div>
+                          {/* Customer Email & Phone - optional */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                            <div>
+                              <Label>E-mail</Label>
+                              <Input
+                                type="email"
+                                value={newReservation.customerEmail}
+                                onChange={(e) => setNewReservation({ ...newReservation, customerEmail: e.target.value })}
+                                placeholder="Voliteľné"
+                              />
+                            </div>
+                            <div>
+                              <Label>Telefón</Label>
+                              <Input
+                                type="tel"
+                                value={newReservation.customerPhone}
+                                onChange={(e) => setNewReservation({ ...newReservation, customerPhone: e.target.value })}
+                                placeholder="Voliteľné"
+                              />
+                            </div>
+                          </div>
+                        </>
+                      )}
                       {/* Service selection - fetched from API */}
                       <div>
                         <Label>Služba *</Label>
@@ -1134,6 +1225,81 @@ const AdminDashboard = () => {
                             </span>
                           </div>
                         </div>
+                      </div>
+                    );
+                  }
+
+                  if (item.kind === 'vacation') {
+                    const vacation = item.vacation;
+                    const isExpanded = expandedVacations.has(vacation.id);
+                    const slotCount = vacation.reservations.length;
+                    return (
+                      <div
+                        key={vacation.id}
+                        id={`reservation-${vacation.reservations[0].id}`}
+                        className="border-l-4 border-emerald-500/40 bg-emerald-500/10 rounded-lg p-4"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-emerald-500/20">
+                              <Palmtree className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <h3 className="font-semibold text-sm sm:text-base truncate">Dovolenka</h3>
+                              <div className="flex flex-wrap items-center gap-1 sm:gap-3">
+                                <span className="text-sm sm:text-base font-bold text-accent">
+                                  {vacation.startTime} - {vacation.endTime}
+                                </span>
+                                {slotCount > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleVacationExpanded(vacation.id)}
+                                    className="flex items-center gap-1 text-[10px] sm:text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors"
+                                  >
+                                    {slotCountLabel(slotCount)}
+                                    <ChevronDown className={cn("w-3 h-3 transition-transform", isExpanded && "rotate-180")} />
+                                  </button>
+                                )}
+                              </div>
+                              {vacation.note && (
+                                <p className="text-[11px] sm:text-xs text-muted-foreground mt-1 italic">
+                                  📝 {vacation.note}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-1 sm:gap-2 flex-shrink-0">
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              className="h-8 w-8 sm:h-9 sm:w-9"
+                              onClick={() => slotCount > 1 ? handleCancelVacation(vacation) : handleCancelReservation(vacation.reservations[0])}
+                              title={slotCount > 1 ? "Zrušiť celú dovolenku" : "Zrušiť dovolenku"}
+                            >
+                              <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        {isExpanded && slotCount > 1 && (
+                          <div className="mt-3 pt-3 border-t border-emerald-500/20 space-y-1">
+                            {vacation.reservations.map((r) => (
+                              <div key={r.id} className="flex items-center justify-between gap-2 pl-10 sm:pl-[52px]">
+                                <span className="text-xs sm:text-sm font-medium text-muted-foreground">
+                                  {formatTime(r.startTime)} - {formatTime(r.endTime)}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  onClick={() => handleCancelReservation(r)}
+                                  title="Zrušiť tento slot"
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     );
                   }
@@ -1817,7 +1983,7 @@ const AdminDashboard = () => {
                                 );
                               }
 
-                              const r = item.reservation;
+                              const r = item.kind === 'vacation' ? item.vacation.reservations[0] : item.reservation;
                               const cfg = r.cutServiceName ? getServiceConfig(r.cutServiceName) : undefined;
                               return (
                                 <button
@@ -1834,14 +2000,29 @@ const AdminDashboard = () => {
                                   }}
                                   className={cn(
                                     "w-full text-left rounded px-2 py-1.5 border transition-colors",
-                                    cfg ? `${cfg.bg} ${cfg.border} hover:brightness-110` : "bg-muted/40 border-border hover:bg-muted/60"
+                                    item.kind === 'vacation'
+                                      ? "bg-emerald-500/10 border-emerald-500/40 hover:brightness-110"
+                                      : cfg ? `${cfg.bg} ${cfg.border} hover:brightness-110` : "bg-muted/40 border-border hover:bg-muted/60"
                                   )}
                                 >
-                                  <div className="flex items-center justify-between gap-1">
-                                    <span className={cn("text-xs font-semibold", cfg?.text)}>{formatTime(r.startTime)}</span>
-                                    <span className="text-[10px] text-muted-foreground truncate max-w-[70px]">{r.customerName}</span>
-                                  </div>
-                                  <div className="text-[10px] text-foreground/70 truncate mt-0.5">{r.cutServiceName}</div>
+                                  {item.kind === 'vacation' ? (
+                                    <>
+                                      <span className="text-xs font-semibold text-emerald-400">
+                                        {item.vacation.startTime} - {item.vacation.endTime}
+                                      </span>
+                                      <div className="text-[10px] text-foreground/70 truncate mt-0.5">
+                                        Dovolenka{item.vacation.note ? ` · ${item.vacation.note}` : ""}
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <div className="flex items-center justify-between gap-1">
+                                        <span className={cn("text-xs font-semibold", cfg?.text)}>{formatTime(r.startTime)}</span>
+                                        <span className="text-[10px] text-muted-foreground truncate max-w-[70px]">{r.customerName}</span>
+                                      </div>
+                                      <div className="text-[10px] text-foreground/70 truncate mt-0.5">{r.cutServiceName}</div>
+                                    </>
+                                  )}
                                 </button>
                               );
                             })
@@ -1897,6 +2078,17 @@ const AdminDashboard = () => {
                                     className="text-[9px] sm:text-[10px] rounded px-1 py-0.5 truncate border border-dashed border-muted-foreground/30 bg-muted/20 text-muted-foreground"
                                   >
                                     {item.placeholder.startTime} Voľný termín
+                                  </div>
+                                );
+                              }
+
+                              if (item.kind === 'vacation') {
+                                return (
+                                  <div
+                                    key={item.vacation.id}
+                                    className="text-[9px] sm:text-[10px] rounded px-1 py-0.5 truncate border bg-emerald-500/10 border-emerald-500/40 text-emerald-400"
+                                  >
+                                    {item.vacation.startTime}-{item.vacation.endTime} Dovolenka
                                   </div>
                                 );
                               }

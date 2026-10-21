@@ -7,5 +7,5 @@ public interface VacationCreateAdminApi {
 
   void createVacation(
       Long barberId, LocalDate date, LocalTime startTime, LocalTime endTime,
-      int slotDurationMinutes);
+      int slotDurationMinutes, String note);
 }
