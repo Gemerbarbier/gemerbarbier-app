@@ -10,7 +10,9 @@ public class SpaController {
   @GetMapping(value = {
       "/",
       "/admin-dashboard",
-      "/admin-dashboard/**"
+      "/admin-dashboard/**",
+      "/ochrana-osobnych-udajov",
+      "/obchodne-podmienky"
   })
   public String forward(HttpServletResponse response) {
     response.setHeader("Cache-Control", "no-store");
