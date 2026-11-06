@@ -113,4 +113,12 @@ public class ReservationStorage implements ReservationStorageApi {
 
     repository.releaseSmsReminder(reservationId);
   }
+
+  @Override
+  @Transactional
+  public int anonymizeCreatedBefore(LocalDateTime cutoff, String placeholderName) {
+    logger.debug("Anonymizing reservations created before {}.", cutoff);
+
+    return repository.anonymizeCreatedBefore(cutoff, placeholderName);
+  }
 }

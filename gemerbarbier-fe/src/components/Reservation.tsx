@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -538,6 +539,13 @@ const Reservation = () => {
 
             <p className="text-sm text-muted-foreground text-center">
               * Všetky polia sú povinné. Potvrdenie vám zašleme e-mailom čoskoro.
+            </p>
+
+            <p className="text-xs text-muted-foreground text-center">
+              Vaše údaje použijeme len na vybavenie rezervácie a pripomienku termínu.{" "}
+              <Link to="/ochrana-osobnych-udajov" className="text-accent hover:underline">
+                Ochrana osobných údajov
+              </Link>
             </p>
           </form>
         </Card>

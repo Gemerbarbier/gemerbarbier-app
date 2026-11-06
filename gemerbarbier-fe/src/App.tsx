@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/AdminLogin";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsAndConditions from "./pages/TermsAndConditions";
 import AdminDashboard from "./pages/AdminDashboard";
 import RequireAdminAuth from "./components/RequireAdminAuth";
 
@@ -19,6 +21,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/ochrana-osobnych-udajov" element={<PrivacyPolicy />} />
+          <Route path="/obchodne-podmienky" element={<TermsAndConditions />} />
           <Route path="/admin-dashboard/login" element={<AdminLogin />} />
           <Route
             path="/admin-dashboard"

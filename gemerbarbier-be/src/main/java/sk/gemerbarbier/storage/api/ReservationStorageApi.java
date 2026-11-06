@@ -28,4 +28,6 @@ public interface ReservationStorageApi {
   void releaseEmailReminder(Long reservationId);
 
   void releaseSmsReminder(Long reservationId);
+
+  int anonymizeCreatedBefore(LocalDateTime cutoff, String placeholderName);
 }

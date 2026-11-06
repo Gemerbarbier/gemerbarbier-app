@@ -16,7 +16,8 @@ import org.springframework.web.client.RestClient;
  * POST issued from the reminder sweep's scheduler thread would wedge the whole sweep.
  */
 @Configuration
-@EnableConfigurationProperties({NotificationProperties.class, GoogleProperties.class})
+@EnableConfigurationProperties({NotificationProperties.class, GoogleProperties.class,
+    RetentionProperties.class})
 public class NotificationConfiguration {
 
   @Bean

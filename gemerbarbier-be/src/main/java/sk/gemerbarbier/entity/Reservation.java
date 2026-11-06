@@ -1,5 +1,6 @@
 package sk.gemerbarbier.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -51,5 +52,9 @@ public class Reservation {
 
   /** Shared by every reservation created by one vacation request; null for regular bookings. */
   private String vacationGroupId;
+
+  /** Filled in by the database on insert; drives how long the customer's personal data is kept. */
+  @Column(insertable = false, updatable = false)
+  private LocalDateTime createdAt;
 
 }

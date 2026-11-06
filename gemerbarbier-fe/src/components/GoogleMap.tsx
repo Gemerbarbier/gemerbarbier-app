@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { getMapsConfig } from "@/lib/api";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
+import { setConsent, useConsent } from "@/lib/consent";
 
 declare global {
   interface Window {
@@ -13,8 +15,12 @@ const GoogleMap = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const consent = useConsent();
 
   useEffect(() => {
+    // Google Maps sets its own cookies, so it may only load after the visitor consents.
+    if (consent !== "accepted") return;
+
     const initMap = async () => {
       try {
         // Fetch maps configuration from the backend
@@ -181,7 +187,26 @@ const GoogleMap = () => {
     };
 
     initMap();
-  }, []);
+  }, [consent]);
+
+  if (consent !== "accepted") {
+    return (
+      <Card className="overflow-hidden border-border">
+        <div className="aspect-video bg-gradient-dark flex items-center justify-center">
+          <div className="text-center space-y-4 p-8 max-w-md">
+            <MapPin className="w-16 h-16 text-accent mx-auto" />
+            <p className="text-muted-foreground">
+              Mapa sa zobrazuje cez službu Google Maps, ktorá môže ukladať cookies.
+              Zobrazením mapy s tým súhlasíte.
+            </p>
+            <Button variant="metallic" onClick={() => setConsent("accepted")}>
+              Zobraziť Mapu
+            </Button>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   if (error) {
     return (

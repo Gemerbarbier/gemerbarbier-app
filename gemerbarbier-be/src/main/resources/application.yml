@@ -45,3 +45,8 @@ gemerbarbier:
     places-api-key: ${GOOGLE_API_KEY:}
     place-id: ${GOOGLE_PLACE_ID:}
     reviews-cache: PT6H
+  retention:
+    # Also served to the privacy policy page via /privacy-config, so set it only here (or in env).
+    reservation-months: ${RESERVATION_RETENTION_MONTHS:6}
+    initial-delay: PT2M
+    interval: PT6H

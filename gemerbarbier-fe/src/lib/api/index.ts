@@ -89,12 +89,14 @@ export {
   type RevenueResponse,
 } from './stats-api';
 
-// Content API (maps config, Google reviews)
+// Content API (maps config, privacy config, Google reviews)
 export {
   contentApi,
   getMapsConfig,
+  getPrivacyConfig,
   getReviews,
   type MapsConfig,
+  type PrivacyConfig,
   type Review,
   type ReviewsResponse,
 } from './content-api';

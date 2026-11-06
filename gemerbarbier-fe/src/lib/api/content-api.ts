@@ -1,6 +1,6 @@
 /**
  * Content API Client
- * Endpoints: /maps-config, /reviews
+ * Endpoints: /maps-config, /privacy-config, /reviews
  *
  * These used to be Supabase edge functions; they now live in the Spring backend so the app has no
  * dependency on Supabase.
@@ -13,6 +13,10 @@ import { httpClient, type ApiResponse } from './http-client';
 export interface MapsConfig {
   apiKey: string;
   placeId: string;
+}
+
+export interface PrivacyConfig {
+  reservationRetentionMonths: number;
 }
 
 export interface Review {
@@ -40,6 +44,14 @@ export async function getMapsConfig(): Promise<ApiResponse<MapsConfig>> {
 }
 
 /**
+ * Get the privacy settings the backend enforces, so the privacy policy states the same values
+ * GET /privacy-config
+ */
+export async function getPrivacyConfig(): Promise<ApiResponse<PrivacyConfig>> {
+  return httpClient<PrivacyConfig>('/privacy-config');
+}
+
+/**
  * Get the shop's Google reviews (cached server-side)
  * GET /reviews
  */
@@ -51,5 +63,6 @@ export async function getReviews(): Promise<ApiResponse<ReviewsResponse>> {
 
 export const contentApi = {
   getMapsConfig,
+  getPrivacyConfig,
   getReviews,
 };

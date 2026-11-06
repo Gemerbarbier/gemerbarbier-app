@@ -1,21 +1,23 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Cookie, X } from "lucide-react";
-
-const STORAGE_KEY = "gb-cookie-consent";
+import { getConsent, onConsentSettingsOpen, setConsent, type ConsentValue } from "@/lib/consent";
 
 const CookieConsent = () => {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (!localStorage.getItem(STORAGE_KEY)) {
+    if (!getConsent()) {
       const t = setTimeout(() => setVisible(true), 600);
       return () => clearTimeout(t);
     }
   }, []);
 
-  const decide = (value: "accepted" | "rejected") => {
-    localStorage.setItem(STORAGE_KEY, value);
+  useEffect(() => onConsentSettingsOpen(() => setVisible(true)), []);
+
+  const decide = (value: ConsentValue) => {
+    setConsent(value);
     setVisible(false);
   };
 
@@ -41,8 +43,12 @@ const CookieConsent = () => {
               Súbory Cookies
             </h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Používame cookies na zlepšenie vášho zážitku a analýzu návštevnosti.
-              Kliknutím na „Prijať" súhlasíte s ich používaním.
+              Nevyhnutné technické údaje ukladáme vždy. So súhlasom zobrazíme aj mapu
+              Google Maps, ktorá môže ukladať cookies spoločnosti Google.
+              Súhlas môžete kedykoľvek zmeniť v pätičke stránky.{" "}
+              <Link to="/ochrana-osobnych-udajov" className="text-accent hover:underline">
+                Viac informácií
+              </Link>
             </p>
           </div>
         </div>

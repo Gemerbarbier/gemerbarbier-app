@@ -86,4 +86,25 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
   @Modifying
   @Query("UPDATE Reservation r SET r.smsReminderSentAt = NULL WHERE r.id = :id")
   int releaseSmsReminder(@Param("id") Long id);
+
+  /**
+   * Erases the customer's personal data from reservations created before the cutoff. The row
+   * itself stays so the statistics keep counting the visit. Vacation blocks hold no customer data.
+   */
+  @Modifying
+  @Query("""
+      UPDATE Reservation r
+      SET r.customerName = :placeholderName,
+          r.customerEmail = NULL,
+          r.customerPhone = NULL,
+          r.note = NULL
+      WHERE r.createdAt < :cutoff
+        AND r.vacationGroupId IS NULL
+        AND (r.customerName <> :placeholderName
+          OR r.customerEmail IS NOT NULL
+          OR r.customerPhone IS NOT NULL
+          OR r.note IS NOT NULL)
+      """)
+  int anonymizeCreatedBefore(@Param("cutoff") LocalDateTime cutoff,
+      @Param("placeholderName") String placeholderName);
 }

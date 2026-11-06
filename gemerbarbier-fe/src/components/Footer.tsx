@@ -1,4 +1,6 @@
 import { Instagram } from "lucide-react";
+import { Link } from "react-router-dom";
+import { openConsentSettings } from "@/lib/consent";
 import logoMark from "@/assets/gb_logo.png";
 
 const Footer = () => {
@@ -35,6 +37,8 @@ const Footer = () => {
                         const element = document.getElementById(ids[idx]);
                         if (element) {
                           element.scrollIntoView({ behavior: "smooth" });
+                        } else {
+                          window.location.href = `/#${ids[idx]}`;
                         }
                       }}
                       className="text-muted-foreground hover:text-accent transition-colors"
@@ -74,13 +78,16 @@ const Footer = () => {
             <p className="text-sm text-muted-foreground">
               © {currentYear} Gemerbarbier. Všetky práva vyhradené.
             </p>
-            <div className="flex gap-6 text-sm">
-              <a href="#" className="text-muted-foreground hover:text-accent transition-colors">
-                Ochrana Súkromia
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-accent transition-colors">
+            <div className="flex flex-wrap justify-center gap-6 text-sm">
+              <Link to="/ochrana-osobnych-udajov" className="text-muted-foreground hover:text-accent transition-colors">
+                Ochrana Osobných Údajov
+              </Link>
+              <button onClick={openConsentSettings} className="text-muted-foreground hover:text-accent transition-colors">
+                Nastavenia Cookies
+              </button>
+              <Link to="/obchodne-podmienky" className="text-muted-foreground hover:text-accent transition-colors">
                 Obchodné Podmienky
-              </a>
+              </Link>
             </div>
           </div>
         </div>

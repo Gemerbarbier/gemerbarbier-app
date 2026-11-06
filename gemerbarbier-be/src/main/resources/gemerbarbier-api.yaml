@@ -220,6 +220,18 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MapsConfigResponse'
+  /privacy-config:
+    get:
+      tags: [ Privacy ]
+      summary: Privacy settings shown on the privacy policy page
+      operationId: getPrivacyConfig
+      responses:
+        200:
+          description: Privacy configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivacyConfigResponse'
   /reviews:
     get:
       tags: [ Review ]
@@ -513,6 +525,12 @@ components:
           type: string
         placeId:
           type: string
+    PrivacyConfigResponse:
+      type: object
+      properties:
+        reservationRetentionMonths:
+          type: integer
+          format: int32
     ReviewsResponse:
       type: object
       properties:
